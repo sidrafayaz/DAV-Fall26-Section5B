@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>24I-2551_DS-B_Lab08_Task1 - Top 10 Richest Countries</title>
+  <!-- Load D3.js v7 CDN -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 24px;
+      background-color: #f8fafc;
+      color: #1e293b;
+    }
+
+    /* Student & Task Header */
+    .header-box {
+      background: #ffffff;
+      padding: 16px 20px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .header-box h1 {
+      margin: 0 0 4px 0;
+      font-size: 20px;
+      color: #0f172a;
+    }
+
+    .header-box p {
+      margin: 0;
+      font-size: 13.5px;
+      color: #64748b;
+    }
+
+    .badge {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: bold;
+    }
+
+    /* Controls (1952 vs 2007 buttons) */
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .btn {
+      padding: 8px 18px;
+      font-size: 14px;
+      font-weight: bold;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      color: #334155;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn:hover {
+      background: #e2e8f0;
+    }
+
+    .btn.active {
+      background: #2563eb;
+      color: #ffffff;
+      border-color: #2563eb;
+    }
+
+    /* Chart Card */
+    .chart-card {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      display: inline-block;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      margin-bottom: 20px;
+    }
+
+    /* Continent Legend */
+    .legend {
+      display: flex;
+      gap: 16px;
+      margin-top: 14px;
+      font-size: 13px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .legend-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+    }
+
+    /* Floating HTML Tooltip */
+    #tooltip {
+      position: absolute;
+      display: none;
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      pointer-events: none;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+      z-index: 1000;
+      line-height: 1.45;
+    }
+
+    /* Embedded Documentation & Comments Under the Code */
+    .comments-section {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 20px;
+      max-width: 900px;
+    }
+
+    .comments-section h2 {
+      margin-top: 0;
+      font-size: 17px;
+      color: #0f172a;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 6px;
+    }
+
+    .comment-block {
+      background: #f8fafc;
+      border-left: 4px solid #2563eb;
+      padding: 10px 14px;
+      margin-bottom: 10px;
+      font-size: 13.5px;
+      line-height: 1.5;
+    }
+
+    .comment-block code {
+      background: #e2e8f0;
+      padding: 2px 4px;
+      border-radius: 3px;
+      font-family: Consolas, monospace;
+    }
+
+    .axis text {
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header Banner -->
+  <div class="header-box">
+    <div>
+      <h1>DVA Lab 8 - Task 1: Top 10 Richest Countries</h1>
+      <p>UN Scenario: Which countries are the richest? Is it always the same ones?</p>
+    </div>
+    <div class="badge">
+      Roll No: 24I-2551 | Section: DS-(B)
+    </div>
+  </div>
+
+  <!-- Step 5: Buttons for switching years -->
+  <div class="controls">
+    <span><strong>Select Year:</strong></span>
+    <button id="btn-1952" class="btn" onclick="setYear(1952)">Year 1952</button>
+    <button id="btn-2007" class="btn active" onclick="setYear(2007)">Year 2007</button>
+    <span style="font-size: 13px; color: #64748b;">(Click to trigger animated D3 bar reordering &amp; scale transition)</span>
+  </div>
+
+  <!-- Chart Container -->
+  <div class="chart-card">
+    <svg id="chart"></svg>
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <!-- Floating Tooltip -->
+  <div id="tooltip"></div>
+
+  <!-- Comments and Thought Process Section Under the Chart -->
+  <div class="comments-section">
+    <h2>Task 1: Working Process, Line Explanations &amp; Step 6 Answers</h2>
+
+    <div class="comment-block">
+      <strong>Step 1 (Predict First):</strong>
+      In 2007, Norway is the richest country ($49,357), whereas in 1952, Kuwait was the richest by far ($108,382); thus, it is <strong>not</strong> the same country.
+    </div>
+
+    <div class="comment-block">
+      <strong>Step 2 (Top 10 Horizontal Bars):</strong>
+      Filtered dataset for the active year, sorted descending by <code>gdpPercap</code>, sliced top 10 rows, and drew horizontal SVG bars with countries on the left using <code>d3.scaleLinear</code> and <code>d3.scaleBand</code>.
+    </div>
+
+    <div class="comment-block">
+      <strong>Step 3 (Colour by Continent):</strong>
+      Mapped colors using the Vibrant Modern Palette. Europe, Asia, and the Americas appear in the top 10; Africa is completely absent.
+    </div>
+
+    <div class="comment-block">
+      <strong>Step 4 (Hover Interaction):</strong>
+      Attached <code>mouseover</code>, <code>mousemove</code>, and <code>mouseout</code> listeners to show a floating HTML tooltip with country name, continent, and exact formatted USD GDP per capita.
+    </div>
+
+    <div class="comment-block">
+      <strong>Step 5 (Transitions):</strong>
+      Buttons trigger animated D3 transitions (750ms). Data bound with key function <code>d =&gt; d.country</code> ensures smooth sliding and reordering.
+    </div>
+
+    <div class="comment-block">
+      <strong>Step 6.1 (Which line keeps only the top 10?):</strong>
+      The JavaScript array method <code>.slice(0, 10)</code> extracts only the first 10 items from the descending-sorted country array.
+    </div>
+
+    <div class="comment-block">
+      <strong>Step 6.2 (Why do we write <code>d =&gt; d.country</code> inside <code>.data(...)</code>?):</strong>
+      Writing <code>d =&gt; d.country</code> acts as a key function that gives each SVG rectangle object constancy, allowing D3 to track and animate existing country bars between years instead of incorrectly morphing by array index.
+    </div>
+
+    <div class="comment-block">
+      <strong>Step 6.3 (In 1952, why do the other bars look so short?):</strong>
+      Kuwait's GDP per capita was unusually massive ($108,382 due to its 1950s oil boom), expanding the linear x-axis scale so wide that the second richest country ($14,734) occupies less than 15% of the chart width.
+    </div>
+  </div>
+
+  <script>
+    // --- 1. Dimensions and Margins ---
+    const width = 740;
+    const height = 400;
+    const margin = { top: 20, right: 30, bottom: 40, left: 130 };
+    const innerWidth = width - margin.left - margin.right;
+    const innerHeight = height - margin.top - margin.bottom;
+
+    // --- 2. Color Palette (Vibrant Modern Palette) ---
+    const continentColors = {
+      "Europe": "#2563eb",   // Royal Blue
+      "Asia": "#f59e0b",     // Amber
+      "Americas": "#ef4444", // Crimson
+      "Africa": "#10b981",   // Emerald
+      "Oceania": "#8b5cf6"   // Purple
+    };
+
+    // Render Legend
+    const legendContainer = d3.select("#legend");
+    legendContainer.append("span").html("<strong>Continents:</strong>");
+    Object.entries(continentColors).forEach(([continent, color]) => {
+      legendContainer.append("div")
+        .attr("class", "legend-item")
+        .html(`<span class="legend-dot" style="background-color: ${color}"></span><span>${continent}</span>`);
+    });
+
+    // --- 3. Setup SVG Canvas ---
+    const svg = d3.select("#chart")
+      .attr("width", width)
+      .attr("height", height);
+
+    const g = svg.append("g")
+      .attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+    const xAxisGroup = g.append("g")
+      .attr("transform", `translate(0, ${innerHeight})`);
+
+    const yAxisGroup = g.append("g");
+
+    const tooltip = d3.select("#tooltip");
+    let allData = [];
+
+    // --- 4. Load Dataset ---
+    d3.csv("dataset/gapminder.csv", d3.autoType)
+      .catch(() => d3.csv("gapminder.csv", d3.autoType))
+      .then(data => {
+        allData = data;
+        updateChart(2007); // Default to 2007
+      });
+
+    // --- 5. Chart Update Function ---
+    function updateChart(year) {
+      d3.select("#btn-1952").classed("active", year === 1952);
+      d3.select("#btn-2007").classed("active", year === 2007);
+
+      // Filter by year, sort descending, slice top 10 (Step 6.1 answer)
+      const top10 = allData
+        .filter(d => d.year === year)
+        .sort((a, b) => b.gdpPercap - a.gdpPercap)
+        .slice(0, 10);
+
+      // X Scale (Linear: 0 to max GDP of top 10)
+      const x = d3.scaleLinear()
+        .domain([0, d3.max(top10, d => d.gdpPercap)])
+        .nice()
+        .range([0, innerWidth]);
+
+      // Y Scale (Band: discrete country names)
+      const y = d3.scaleBand()
+        .domain(top10.map(d => d.country))
+        .range([0, innerHeight])
+        .padding(0.2);
+
+      const t = svg.transition().duration(750);
+
+      // Animate Axes
+      xAxisGroup.transition(t)
+        .call(d3.axisBottom(x).ticks(6).tickFormat(d => "$" + d3.format(",")(d)));
+
+      yAxisGroup.transition(t)
+        .call(d3.axisLeft(y));
+
+      // Key function d => d.country for object constancy (Step 6.2 answer)
+      const bars = g.selectAll(".bar")
+        .data(top10, d => d.country);
+
+      bars.join(
+        enter => enter.append("rect")
+          .attr("class", "bar")
+          .attr("x", 0)
+          .attr("y", d => y(d.country))
+          .attr("height", y.bandwidth())
+          .attr("width", 0)
+          .attr("fill", d => continentColors[d.continent] || "#6b7280")
+          .attr("rx", 3)
+          .call(enter => enter.transition(t).attr("width", d => x(d.gdpPercap))),
+        update => update
+          .call(update => update.transition(t)
+            .attr("y", d => y(d.country))
+            .attr("height", y.bandwidth())
+            .attr("width", d => x(d.gdpPercap))
+            .attr("fill", d => continentColors[d.continent] || "#6b7280")
+          ),
+        exit => exit
+          .call(exit => exit.transition(t).attr("width", 0).remove())
+      );
+
+      // Step 4: Hover Tooltip
+      g.selectAll(".bar")
+        .on("mouseover", (event, d) => {
+          d3.select(event.currentTarget).style("opacity", 0.75);
+          tooltip.style("display", "block")
+            .html(`<strong>${d.country}</strong><br/>Continent: ${d.continent}<br/>GDP per capita: $${Math.round(d.gdpPercap).toLocaleString()}`);
+        })
+        .on("mousemove", (event) => {
+          tooltip
+            .style("left", (event.pageX + 14) + "px")
+            .style("top", (event.pageY - 18) + "px");
+        })
+        .on("mouseout", (event) => {
+          d3.select(event.currentTarget).style("opacity", 1.0);
+          tooltip.style("display", "none");
+        });
+    }
+
+    function setYear(year) {
+      updateChart(year);
+    }
+  </script>
+</body>
+</html>
