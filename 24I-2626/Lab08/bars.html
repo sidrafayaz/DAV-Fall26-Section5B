@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Task 2: Unfixed vs Fixed</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body { font-family: sans-serif; }
+        .controls { margin-bottom: 20px; padding-left: 110px; }
+        button { padding: 8px 16px; margin-right: 10px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <button id="btn-unfixed">Show Unfixed (All Data)</button>
+        <button id="btn-fixed">Show Fixed (Top 10 in 2007)</button>
+    </div>
+
+    <svg id="chart" width="800" height="500"></svg>
+
+    <script>
+        const margin = {top: 20, right: 30, bottom: 40, left: 110};
+        const width = 800 - margin.left - margin.right;
+        const height = 500 - margin.top - margin.bottom;
+
+        const svg = d3.select("#chart")
+            .append("g")
+            .attr("transform", `translate(${margin.left},${margin.top})`);
+
+        // Create persistent scales and axes groups
+        const x = d3.scaleLinear().range([0, width]);
+        const y = d3.scaleBand().range([0, height]).padding(0.1);
+        
+        const xAxis = svg.append("g")
+            .attr("class", "x-axis")
+            .attr("transform", `translate(0,${height})`);
+            
+        const yAxis = svg.append("g")
+            .attr("class", "y-axis");
+
+        let rawData = [];
+
+        // Reusable function to draw the chart based on whatever data is passed in
+        function renderChart(viewData) {
+            // Update domains based on the new data
+            x.domain([0, d3.max(viewData, d => d.gdpPercap)]);
+            y.domain(viewData.map(d => d.country));
+
+            // Animate the axes to their new scales
+            xAxis.transition().duration(750).call(d3.axisBottom(x));
+            yAxis.transition().duration(750).call(d3.axisLeft(y));
+
+            // Bind data and update rectangles
+            svg.selectAll("rect")
+                .data(viewData)
+                .join("rect")
+                .transition().duration(750)
+                .attr("x", 0)
+                .attr("y", d => y(d.country))
+                .attr("width", d => x(d.gdpPercap))
+                .attr("height", y.bandwidth())
+                .attr("fill", "steelblue");
+        }
+
+        d3.csv("gapminder.csv", d3.autoType).then(data => {
+            rawData = data;
+            
+            // Start with the unfixed version
+            renderChart(rawData);
+
+            // Button listeners
+            d3.select("#btn-unfixed").on("click", () => {
+                renderChart(rawData);
+            });
+
+            d3.select("#btn-fixed").on("click", () => {
+                const top10Data = rawData.filter(d => d.year === 2007)
+                    .sort((a, b) => d3.descending(a.gdpPercap, b.gdpPercap))
+                    .slice(0, 10);
+                renderChart(top10Data);
+            });
+        });
+    </script>
+</body>
+</html>
+
+<!--
+1. How many <rect> did you expect? How many did you get? Why?
+           Expected: 142 (one for each country). 
+           Got: 1704. 
+           Why: The dataset contains multiple years for each country. Because we did not filter by year initially, D3 drew a rectangle for every single row in the dataset.
+
+        2. How tall is one bar? Can you read the names?
+           Height: Extremely small (less than 1 pixel) because it is trying to fit 1704 bars into a 500-pixel height.
+           Names: No, the country names are completely overlapping and unreadable on the Y-axis.
+
+        3. After your first fix, is the chart easy to read? What would you change?
+           Even after filtering to a single year (142 bars), the chart is still very crowded and hard to read. 
+           Change: Limit the data to only the top 10 richest countries so the bars have enough thickness and the names are clear.
+
+        4. Now show the 10 richest countries. Is Norway in your chart? If not, what is missing?
+           Yes, Norway is correctly positioned at the top of the chart with the highest income. If it were missing, it means the step to `.filter(d => d.year === 2007)` was forgotten, as Kuwait was richer in 1952.
+-->
