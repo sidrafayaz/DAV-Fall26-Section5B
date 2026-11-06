@@ -1,0 +1,114 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>T1: Course Enrollment Treemap</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+
+<h2>Task 1 Treemap</h2>
+
+<svg width="1000" height="650"></svg>
+
+<script>
+d3.csv("university.csv", d3.autoType).then(function(data) {
+
+    var width = 940;
+    var height = 500;
+
+    var colors = d3.scaleOrdinal()
+        .domain(["Computing", "Engineering", "Business", "Sciences"])
+        .range(["#4e79a7", "#f28e2b", "#59a14f", "#e15759"]);
+
+    var svg = d3.select("svg");
+
+    var legend = svg.append("g")
+        .attr("transform", "translate(30, 25)");
+
+    var departments = ["Computing", "Engineering", "Business", "Sciences"];
+
+    departments.forEach(function(department, i) {
+        legend.append("rect")
+            .attr("x", i * 220)
+            .attr("y", 0)
+            .attr("width", 18)
+            .attr("height", 18)
+            .attr("fill", colors(department));
+
+        legend.append("text")
+            .attr("x", i * 220 + 25)
+            .attr("y", 14)
+            .text(department)
+            .style("font-size", "14px");
+    });
+
+    var groupedData = {
+        name: "University",
+        children: d3.groups(data, d => d.department).map(function(group) {
+            return {
+                name: group[0],
+                children: group[1].map(function(d) {
+                    return {
+                        name: d.course,
+                        value: d.students,
+                        students: d.students,
+                        department: d.department
+                    };
+                })
+            };
+        })
+    };
+
+    var root = d3.hierarchy(groupedData)
+        .sum(d => d.value);
+
+    d3.treemap()
+        .size([width, height])
+        .paddingInner(3)(root);
+
+    var chart = svg.append("g")
+        .attr("transform", "translate(30, 100)");
+
+    var courses = chart.selectAll("g")
+        .data(root.leaves())
+        .enter()
+        .append("g")
+        .attr("transform", d => "translate(" + d.x0 + "," + d.y0 + ")");
+
+    courses.append("rect")
+        .attr("width", d => d.x1 - d.x0)
+        .attr("height", d => d.y1 - d.y0)
+        .attr("fill", d => colors(d.data.department))
+        .attr("stroke", "white")
+        .attr("stroke-width", 2);
+
+    courses.append("text")
+        .attr("x", 6)
+        .attr("y", 20)
+        .text(d => d.data.name)
+        .style("font-size", "12px")
+        .style("fill", "white")
+        .style("font-weight", "bold")
+        .style("pointer-events", "none");
+
+    courses.append("text")
+        .attr("x", 6)
+        .attr("y", 38)
+        .text(d => d.data.students + " students")
+        .style("font-size", "11px")
+        .style("fill", "white")
+        .style("pointer-events", "none");
+
+    courses.append("title")
+        .text(d => "Course: " + d.data.name +
+            "\nDepartment: " + d.data.department +
+            "\nStudents: " + d.data.students);
+
+}).catch(function(error) {
+    console.log(error);
+});
+</script>
+
+</body>
+</html>

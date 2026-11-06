@@ -1,0 +1,95 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>T2: University Dendrogram</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+
+<h2>Task 2 Dendrogram</h2>
+<svg width="1200" height="650"></svg>
+
+<script>
+d3.csv("university.csv").then(function(data) {
+
+    var hierarchyData = {
+        name: "University",
+        children: d3.groups(data, d => d.department).map(function(group) {
+            return {
+                name: group[0],
+                children: group[1]
+                    .filter(d => d.course !== "department")
+                    .map(d => ({name: d.course}))
+            };
+        })
+    };
+
+    var root = d3.hierarchy(hierarchyData);
+
+    var svg = d3.select("svg")
+        .append("g")
+        .attr("transform", "translate(150, 40)");
+
+    function drawTree() {
+
+        svg.selectAll("*").remove();
+
+        var tree = d3.cluster().size([550, 900]);
+        tree(root);
+
+        svg.selectAll(".link")
+            .data(root.links())
+            .enter()
+            .append("path")
+            .attr("d", d3.linkHorizontal()
+                .x(d => d.y)
+                .y(d => d.x))
+            .attr("fill", "none")
+            .attr("stroke", "#999")
+            .attr("stroke-width", 1.5);
+
+        var nodes = svg.selectAll(".node")
+            .data(root.descendants())
+            .enter()
+            .append("g")
+            .attr("transform", d => "translate(" + d.y + "," + d.x + ")")
+            .style("cursor", d => d.depth === 1 ? "pointer" : "default")
+            .on("click", function(event, d) {
+                if (d.depth === 1) {
+                    if (d.children) {
+                        d._children = d.children;
+                        d.children = null;
+                    } else {
+                        d.children = d._children;
+                        d._children = null;
+                    }
+                    drawTree();
+                }
+            });
+
+        nodes.append("circle")
+            .attr("r", 5)
+            .attr("fill", d => {
+                if (d.depth === 0) return "#e15759";
+                if (d.depth === 1) return "#f28e2b";
+                return "#4e79a7";
+            });
+
+        nodes.append("text")
+            .attr("x", d => d.depth === 2 ? 10 : -10)
+            .attr("y", 4)
+            .attr("text-anchor", d => d.depth === 2 ? "start" : "end")
+            .text(d => d.data.name)
+            .style("font-size", "12px");
+    }
+
+    drawTree();
+
+}).catch(function(error) {
+    console.log(error);
+});
+</script>
+
+</body>
+</html>

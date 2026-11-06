@@ -1,0 +1,149 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>T3: Flight Route Network</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+
+<h2>Task 3 Flight Network</h2>
+<p>Drag cities to move them. Hover over a city to highlight its routes.</p>
+
+<svg width="1000" height="650"></svg>
+
+<script>
+d3.csv("flights.csv", d3.autoType).then(function(data) {
+
+    var cities = Array.from(new Set(
+        data.flatMap(d => [d.source, d.target])
+    )).map(name => ({name: name}));
+
+    data.forEach(function(d) {
+        d.source = cities.find(c => c.name === d.source);
+        d.target = cities.find(c => c.name === d.target);
+    });
+
+    var degree = {};
+
+    cities.forEach(d => degree[d.name] = 0);
+
+    data.forEach(function(d) {
+        degree[d.source.name]++;
+        degree[d.target.name]++;
+    });
+
+    var radius = d3.scaleLinear()
+        .domain([0, d3.max(cities, d => degree[d.name])])
+        .range([6, 18]);
+
+    var width = 1000;
+    var height = 650;
+
+    var svg = d3.select("svg");
+
+    var simulation = d3.forceSimulation(cities)
+        .force("link", d3.forceLink(data).distance(110))
+        .force("charge", d3.forceManyBody().strength(-250))
+        .force("center", d3.forceCenter(width / 2, height / 2));
+
+    var links = svg.selectAll(".link")
+        .data(data)
+        .enter()
+        .append("line")
+        .attr("stroke", "#999")
+        .attr("stroke-width", d => Math.sqrt(d.flights));
+
+    var nodes = svg.selectAll(".node")
+        .data(cities)
+        .enter()
+        .append("circle")
+        .attr("r", d => radius(degree[d.name]))
+        .attr("fill", "#4e79a7")
+        .call(d3.drag()
+            .on("start", function(event, d) {
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                d.fx = d.x;
+                d.fy = d.y;
+            })
+            .on("drag", function(event, d) {
+                d.fx = event.x;
+                d.fy = event.y;
+            })
+            .on("end", function(event, d) {
+                if (!event.active) simulation.alphaTarget(0);
+                d.fx = null;
+                d.fy = null;
+            }));
+
+    var labels = svg.selectAll(".label")
+        .data(cities)
+        .enter()
+        .append("text")
+        .text(d => d.name)
+        .attr("font-size", "12px")
+        .attr("dx", 10)
+        .attr("dy", 4);
+
+    nodes.append("title")
+        .text(d => d.name + "\nRoutes: " + degree[d.name]);
+
+    nodes.on("mouseover", function(event, city) {
+        links.attr("stroke", d =>
+            d.source.name === city.name || d.target.name === city.name
+            ? "orange" : "#ddd"
+        );
+
+        links.attr("opacity", d =>
+            d.source.name === city.name || d.target.name === city.name
+            ? 1 : 0.15
+        );
+
+        nodes.attr("opacity", d => {
+            if (d.name === city.name) return 1;
+
+            return data.some(link =>
+                (link.source.name === city.name && link.target.name === d.name) ||
+                (link.target.name === city.name && link.source.name === d.name)
+            ) ? 1 : 0.2;
+        });
+
+        labels.attr("opacity", d => {
+            if (d.name === city.name) return 1;
+
+            return data.some(link =>
+                (link.source.name === city.name && link.target.name === d.name) ||
+                (link.target.name === city.name && link.source.name === d.name)
+            ) ? 1 : 0.2;
+        });
+    });
+
+    nodes.on("mouseout", function() {
+        links.attr("stroke", "#999").attr("opacity", 1);
+        nodes.attr("opacity", 1);
+        labels.attr("opacity", 1);
+    });
+
+    simulation.on("tick", function() {
+        links
+            .attr("x1", d => d.source.x)
+            .attr("y1", d => d.source.y)
+            .attr("x2", d => d.target.x)
+            .attr("y2", d => d.target.y);
+
+        nodes
+            .attr("cx", d => d.x)
+            .attr("cy", d => d.y);
+
+        labels
+            .attr("x", d => d.x)
+            .attr("y", d => d.y);
+    });
+
+}).catch(function(error) {
+    console.log(error);
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!doctype html>
+<html>
+<head>
+  <title>Lab 10 - Task 5</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+  <h2>Task 5: Monthly Pollution Levels</h2>
+  <svg width="900" height="500"></svg>
+
+  <script>
+    d3.csv("air_quality_2025.csv").then(data => {
+      const parseDate = d3.timeParse("%Y-%m-%d");
+      const levels = ["Low", "Moderate", "High", "Severe"];
+
+      const getLevel = value => {
+        if (value <= 35) return "Low";
+        if (value <= 75) return "Moderate";
+        if (value <= 150) return "High";
+        return "Severe";
+      };
+
+      data.forEach(d => {
+        d.date = parseDate(d.date);
+        d.pm25_city = +d.pm25_city;
+        d.level = getLevel(d.pm25_city);
+      });
+
+      const months = d3.rollups(
+        data,
+        values => {
+          const month = { month: d3.timeMonth(values[0].date) };
+
+          levels.forEach(level => {
+            month[level] = values.filter(d => d.level === level).length;
+          });
+
+          return month;
+        },
+        d => +d3.timeMonth(d.date)
+      )
+        .map(d => d[1])
+        .sort((a, b) => a.month - b.month);
+
+      const svg = d3.select("svg");
+      const margin = { top: 25, right: 30, bottom: 70, left: 55 };
+      const width = 815;
+      const height = 405;
+      const chart = svg.append("g")
+        .attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+      const x = d3.scaleTime()
+        .domain(d3.extent(months, d => d.month))
+        .range([0, width]);
+
+      const y = d3.scaleLinear()
+        .domain([0, d3.max(months, d => d3.sum(levels, level => d[level]))])
+        .nice()
+        .range([height, 0]);
+
+      const color = d3.scaleOrdinal()
+        .domain(levels)
+        .range(["#c6dbef", "#6baed6", "#3182bd", "#08519c"]);
+
+      const stackedData = d3.stack().keys(levels)(months);
+
+      chart.append("g")
+        .attr("transform", `translate(0, ${height})`)
+        .call(d3.axisBottom(x)
+          .ticks(d3.timeMonth.every(1))
+          .tickFormat(d3.timeFormat("%b")));
+
+      chart.append("g").call(d3.axisLeft(y));
+
+      chart.selectAll("path.area")
+        .data(stackedData)
+        .join("path")
+        .attr("class", "area")
+        .attr("fill", d => color(d.key))
+        .attr("d", d3.area()
+          .x(d => x(d.data.month))
+          .y0(d => y(d[0]))
+          .y1(d => y(d[1])));
+
+      levels.forEach((level, index) => {
+        const legend = chart.append("g")
+          .attr("transform", `translate(${index * 130}, ${height + 35})`);
+
+        legend.append("rect")
+          .attr("width", 15)
+          .attr("height", 15)
+          .attr("fill", color(level));
+
+        legend.append("text")
+          .attr("x", 22)
+          .attr("y", 12)
+          .text(level);
+      });
+    });
+  </script>
+</body>
+</html>

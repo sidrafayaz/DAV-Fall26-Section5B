@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>T4: World Population Choropleth</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+
+<h2>Task 4: World Population</h2>
+<p>Hover over a country to see its population.</p>
+
+<svg width="1000" height="600"></svg>
+
+<script>
+Promise.all([
+    d3.csv("population.csv", d3.autoType),
+    d3.json("custom.geo.json")
+]).then(function(results) {
+
+    var populationData = results[0];
+    var world = results[1];
+
+    console.log("CSV sample:", populationData[0]);
+    console.log("GeoJSON properties:", world.features[0].properties);
+
+    var population = {};
+
+    populationData.forEach(function(d) {
+        population[String(d.id).trim().toUpperCase()] = d;
+    });
+
+    function getCode(d) {
+        var p = d.properties;
+
+        return p["ISO3166-1-Alpha-3"] ||
+               p.ISO_A3 ||
+               p.ISO_A3_EH ||
+               p.ADM0_A3 ||
+               p.iso_a3 ||
+               p.ISO3;
+    }
+
+    var color = d3.scaleSequentialSqrt()
+        .domain([0, 1430])
+        .interpolator(d3.interpolateBlues);
+
+    var svg = d3.select("svg");
+
+    var projection = d3.geoNaturalEarth1()
+        .fitSize([950, 480], world);
+
+    var path = d3.geoPath().projection(projection);
+
+    var map = svg.append("g")
+        .attr("transform", "translate(20, 50)");
+
+    map.selectAll("path")
+        .data(world.features)
+        .enter()
+        .append("path")
+        .attr("d", path)
+        .attr("fill", function(d) {
+            var id = getCode(d);
+
+            var country = id
+                ? population[String(id).trim().toUpperCase()]
+                : null;
+
+            return country
+                ? color(country.population_millions)
+                : "#eeeeee";
+        })
+        .attr("stroke", "#777")
+        .attr("stroke-width", 0.5)
+        .on("mouseover", function() {
+            d3.select(this)
+                .attr("stroke", "black")
+                .attr("stroke-width", 2);
+        })
+        .on("mouseout", function() {
+            d3.select(this)
+                .attr("stroke", "#777")
+                .attr("stroke-width", 0.5);
+        })
+        .append("title")
+        .text(function(d) {
+            var id = getCode(d);
+
+            var country = id
+                ? population[String(id).trim().toUpperCase()]
+                : null;
+
+            if (country) {
+                return country.country + ": " +
+                    country.population_millions + " million";
+            }
+
+            return (d.properties.name || d.properties.ADMIN || "Unknown country")
+                + ": No data";
+        });
+
+    var legend = svg.append("g")
+        .attr("transform", "translate(300, 555)");
+
+    var values = [0, 300, 600, 900, 1200, 1430];
+
+    legend.selectAll("rect")
+        .data(values)
+        .enter()
+        .append("rect")
+        .attr("x", function(d, i) {
+            return i * 55;
+        })
+        .attr("y", 0)
+        .attr("width", 55)
+        .attr("height", 15)
+        .attr("fill", function(d) {
+            return color(d);
+        });
+
+    legend.append("text")
+        .attr("x", 0)
+        .attr("y", 32)
+        .text("0 million");
+
+    legend.append("text")
+        .attr("x", 275)
+        .attr("y", 32)
+        .text("1430 million");
+
+}).catch(function(error) {
+    console.log(error);
+});
+</script>
+
+</body>
+</html>

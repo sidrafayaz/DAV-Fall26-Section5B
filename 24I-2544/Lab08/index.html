@@ -1,0 +1,121 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Top 10 Richest Countries</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <!-- <h2>Top 10 Richest Countries in 2007</h2> -->
+    <h2 id="heading">Top 10 Richest Countries in 2007</h2>
+
+    <button onclick="updateChart(1952)">1952</button>
+    <button onclick="updateChart(2007)">2007</button>
+    <svg width="900" height="450"></svg>
+
+    
+    <script>
+        const svg = d3.select("svg");
+
+        const margin = {top: 20, right: 30, bottom: 40, left: 120};
+        const width = 900 - margin.left - margin.right;
+        const height = 450 - margin.top - margin.bottom;
+
+        const chart = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        let allData;
+
+        const x = d3.scaleLinear().range([0, width]);
+
+        const y = d3.scaleBand().range([0, height]).padding(0.2);
+
+        d3.csv("gapminder.csv", d3.autoType).then(function(data) {
+            allData = data;
+            updateChart(2007); // we put everything in the function and call the same code for both years   
+        });
+
+        function updateChart(year) {
+            let data = allData.filter(function(d) {
+                return d.year === year;
+            });
+
+            data.sort(function(a, b) {
+                return b.gdpPercap - a.gdpPercap;
+            });
+
+            data = data.slice(0, 10); // keeps only 10 countries
+
+            x.domain([0, d3.max(data, function(d) {
+                return d.gdpPercap;
+            })]);
+
+            y.domain(data.map(function(d) {
+                return d.country; // d.country represent each row's country. d represents a row
+            }));
+
+            d3.select("#heading")
+                .text("Top 10 Richest Countries in " + year);
+
+            const bars = chart.selectAll("rect")
+                .data(data, function(d) {
+                    return d.country;
+                });
+
+            bars.enter()
+                .append("rect")
+                .attr("x", 0)
+                .attr("y", function(d) {
+                    return y(d.country);
+                })
+                .attr("width", function(d) {
+                    return x(d.gdpPercap);
+                })
+                .attr("height", y.bandwidth())
+                .attr("fill", function(d) {
+                    if (d.continent === "Europe") return "steelblue";
+                    if (d.continent === "Asia") return "orange";
+                    if (d.continent === "Americas") return "green";
+                    if (d.continent === "Africa") return "red";
+                    return "gray";
+                })
+                .append("title")
+                .text(function(d) {
+                    return d.country + ": " + d3.format(",.0f")(d.gdpPercap);
+                });
+
+            bars.transition()
+                .duration(750)
+                .attr("y", function(d) {
+                    return y(d.country);
+                })
+                .attr("width", function(d) {
+                    return x(d.gdpPercap);
+                });
+
+            chart.selectAll("rect")
+                .filter(function(d) {
+                    return !data.some(function(item) {
+                        return item.country === d.country;
+                    });
+                })
+                .remove();
+
+            chart.selectAll(".y-axis")
+                .remove();
+
+            chart.append("g")
+                .attr("class", "y-axis")
+                .call(d3.axisLeft(y));
+
+            chart.selectAll(".x-axis")
+                .remove();
+
+            chart.append("g")
+                .attr("class", "x-axis")
+                .attr("transform", "translate(0," + height + ")")
+                .call(d3.axisBottom(x));
+        }
+    </script>
+
+</body>
+</html>

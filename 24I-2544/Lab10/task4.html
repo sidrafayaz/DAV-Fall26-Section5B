@@ -1,0 +1,77 @@
+<!doctype html>
+<html>
+<head>
+  <title>Lab 10 - Task 4</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+  <h2>Task 4: City vs Suburb PM2.5</h2>
+  <svg width="900" height="450"></svg>
+
+  <script>
+    d3.csv("air_quality_2025.csv").then(data => {
+      const parseDate = d3.timeParse("%Y-%m-%d");
+
+      data.forEach(d => {
+        d.date = parseDate(d.date);
+        d.pm25_city = +d.pm25_city;
+        d.pm25_suburb = +d.pm25_suburb;
+      });
+
+      data.sort((a, b) => a.date - b.date);
+
+      const svg = d3.select("svg");
+      const margin = { top: 20, right: 30, bottom: 45, left: 55 };
+      const width = 815;
+      const height = 370;
+      const chart = svg.append("g")
+        .attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+      const x = d3.scaleTime()
+        .domain(d3.extent(data, d => d.date))
+        .range([0, width]);
+
+      const y = d3.scaleLinear()
+        .domain([0, d3.max(data, d => Math.max(d.pm25_city, d.pm25_suburb)) * 1.1])
+        .range([height, 0]);
+
+      const line = key => d3.line()
+        .x(d => x(d.date))
+        .y(d => y(d[key]));
+
+      chart.append("g")
+        .attr("transform", `translate(0, ${height})`)
+        .call(d3.axisBottom(x));
+
+      chart.append("g").call(d3.axisLeft(y));
+
+      const series = [
+        { key: "pm25_city", color: "steelblue", label: "City" },
+        { key: "pm25_suburb", color: "crimson", label: "Suburb" }
+      ];
+
+      series.forEach((item, index) => {
+        chart.append("path")
+          .datum(data)
+          .attr("fill", "none")
+          .attr("stroke", item.color)
+          .attr("stroke-width", 1.5)
+          .attr("d", line(item.key));
+
+        chart.append("line")
+          .attr("x1", width - 115)
+          .attr("x2", width - 90)
+          .attr("y1", 12 + index * 20)
+          .attr("y2", 12 + index * 20)
+          .attr("stroke", item.color)
+          .attr("stroke-width", 3);
+
+        chart.append("text")
+          .attr("x", width - 85)
+          .attr("y", 16 + index * 20)
+          .text(item.label);
+      });
+    });
+  </script>
+</body>
+</html>

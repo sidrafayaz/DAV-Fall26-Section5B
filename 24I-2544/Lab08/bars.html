@@ -1,0 +1,56 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Countries by Income</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <h2>Countries by Income in 2007</h2>
+    <svg width="1100" height="3200"></svg>
+
+    <script>
+        const svg = d3.select("svg");
+
+        const margin = {top: 20, right: 40, bottom: 40, left: 130};
+        const width = 1100 - margin.left - margin.right;
+        const height = 3200 - margin.top - margin.bottom;
+
+        const chart = svg.append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        d3.csv("gapminder.csv", d3.autoType).then(function(data) {
+
+            data = data.filter(d => d.year === 2007);
+
+            data.sort((a, b) => a.country.localeCompare(b.country));
+
+            const x = d3.scaleLinear()
+                .domain([0, d3.max(data, d => d.gdpPercap)])
+                .range([0, width]);
+
+            const y = d3.scaleBand()
+                .domain(data.map(d => d.country))
+                .range([0, height])
+                .padding(0.1);
+
+            chart.selectAll("rect")
+                .data(data)
+                .enter()
+                .append("rect")
+                .attr("x", 0)
+                .attr("y", d => y(d.country))
+                .attr("width", d => x(d.gdpPercap))
+                .attr("height", y.bandwidth())
+                .attr("fill", "steelblue");
+
+            chart.append("g")
+                .call(d3.axisLeft(y));
+
+            chart.append("g")
+                .attr("transform", "translate(0," + height + ")")
+                .call(d3.axisBottom(x));
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!doctype html>
+<html>
+<head>
+  <title>Lab 10 - Task 8</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+  <h2>Task 8: Daily PM2.5 and 7-Day Moving Average</h2>
+  <p id="out"></p>
+  <svg width="900" height="450"></svg>
+
+  <script>
+    d3.csv("air_quality_2025.csv").then(data => {
+      const parseDate = d3.timeParse("%Y-%m-%d");
+
+      data.forEach(d => {
+        d.date = parseDate(d.date);
+        d.pm25_city = +d.pm25_city;
+      });
+
+      data.sort((a, b) => a.date - b.date);
+
+      const values = [];
+      const plotData = [];
+      const gaps = [];
+
+      data.forEach((d, index) => {
+        if (index && d3.timeDay.count(data[index - 1].date, d.date) > 1) {
+          const missing = d3.timeDay.count(data[index - 1].date, d.date) - 1;
+
+          gaps.push({
+            start: d3.timeDay.offset(data[index - 1].date, 1),
+            end: d.date,
+            missing
+          });
+
+          values.length = 0;
+          plotData.push(null);
+        }
+
+        values.push(d.pm25_city);
+        d.ma = values.length >= 7 ? d3.mean(values.slice(-7)) : null;
+        plotData.push(d);
+      });
+
+      const missingDays = d3.sum(gaps, d => d.missing);
+      document.querySelector("#out").textContent =
+        `Missing days: ${missingDays} — sensor offline`;
+
+      const svg = d3.select("svg");
+      const margin = { top: 20, right: 30, bottom: 45, left: 55 };
+      const width = 815;
+      const height = 370;
+      const chart = svg.append("g")
+        .attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+      const x = d3.scaleTime()
+        .domain(d3.extent(data, d => d.date))
+        .range([0, width]);
+
+      const y = d3.scaleLinear()
+        .domain([0, d3.max(data, d => d.pm25_city) * 1.1])
+        .range([height, 0]);
+
+      chart.append("g")
+        .attr("transform", `translate(0, ${height})`)
+        .call(d3.axisBottom(x));
+
+      chart.append("g").call(d3.axisLeft(y));
+
+      gaps.forEach(gap => {
+        chart.append("rect")
+          .attr("x", x(gap.start))
+          .attr("width", x(gap.end) - x(gap.start))
+          .attr("height", height)
+          .attr("fill", "orange")
+          .attr("opacity", 0.25);
+
+        chart.append("text")
+          .attr("x", (x(gap.start) + x(gap.end)) / 2)
+          .attr("y", 20)
+          .attr("text-anchor", "middle")
+          .attr("font-size", 11)
+          .text("No data: sensor offline");
+      });
+
+      const line = key => d3.line()
+        .defined(d => d && d[key] != null)
+        .x(d => x(d.date))
+        .y(d => y(d[key]));
+
+      chart.append("path")
+        .datum(plotData)
+        .attr("fill", "none")
+        .attr("stroke", "#999")
+        .attr("opacity", 0.45)
+        .attr("d", line("pm25_city"));
+
+      chart.append("path")
+        .datum(plotData)
+        .attr("fill", "none")
+        .attr("stroke", "navy")
+        .attr("stroke-width", 3)
+        .attr("d", line("ma"));
+    });
+  </script>
+</body>
+</html>

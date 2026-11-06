@@ -1,0 +1,59 @@
+<!doctype html>
+<html>
+<head>
+  <title>Lab 10 - Task 3</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+  <h2>Task 3: Running Total of Unhealthy Days</h2>
+  <p id="out"></p>
+  <svg width="900" height="450"></svg>
+
+  <script>
+    d3.csv("air_quality_2025.csv").then(data => {
+      const parseDate = d3.timeParse("%Y-%m-%d");
+      let total = 0;
+
+      data.forEach(d => {
+        d.date = parseDate(d.date);
+        d.pm25_city = +d.pm25_city;
+        d.runningTotal = d.pm25_city > 75 ? ++total : total;
+      });
+
+      data.sort((a, b) => a.date - b.date);
+      document.querySelector("#out").textContent = `Total unhealthy days: ${total}`;
+
+      const svg = d3.select("svg");
+      const margin = { top: 20, right: 30, bottom: 45, left: 55 };
+      const width = 815;
+      const height = 370;
+      const chart = svg.append("g")
+        .attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+      const x = d3.scaleTime()
+        .domain(d3.extent(data, d => d.date))
+        .range([0, width]);
+
+      const y = d3.scaleLinear()
+        .domain([0, total])
+        .nice()
+        .range([height, 0]);
+
+      chart.append("g")
+        .attr("transform", `translate(0, ${height})`)
+        .call(d3.axisBottom(x));
+
+      chart.append("g").call(d3.axisLeft(y));
+
+      chart.append("path")
+        .datum(data)
+        .attr("fill", "steelblue")
+        .attr("opacity", 0.7)
+        .attr("d", d3.area()
+          .x(d => x(d.date))
+          .y0(height)
+          .y1(d => y(d.runningTotal)));
+    });
+  </script>
+</body>
+</html>

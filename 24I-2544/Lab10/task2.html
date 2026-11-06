@@ -1,0 +1,95 @@
+<!doctype html>
+<html>
+<head>
+  <title>Lab 10 - Task 2</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+  <h2>Task 2: Daily City PM2.5</h2>
+  <p id="out"></p>
+  <svg width="900" height="450"></svg>
+
+  <script>
+    d3.csv("air_quality_2025.csv").then(data => {
+      const parseDate = d3.timeParse("%Y-%m-%d");
+      const formatDate = d3.timeFormat("%d %b");
+
+      data.forEach(d => {
+        d.date = parseDate(d.date);
+        d.pm25_city = +d.pm25_city;
+      });
+
+      data.sort((a, b) => a.date - b.date);
+
+      const above15 = data.filter(d => d.pm25_city > 15).length;
+      const above75 = data.filter(d => d.pm25_city > 75).length;
+
+      document.querySelector("#out").textContent =
+        `Above 15: ${above15} | Above 75: ${above75}`;
+
+      const svg = d3.select("svg");
+      const margin = { top: 20, right: 70, bottom: 45, left: 55 };
+      const width = 775;
+      const height = 370;
+
+      const chart = svg.append("g")
+        .attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+      const x = d3.scaleTime()
+        .domain(d3.extent(data, d => d.date))
+        .range([0, width]);
+
+      const y = d3.scaleLinear()
+        .domain([0, d3.max(data, d => d.pm25_city) * 1.1])
+        .range([height, 0]);
+
+      chart.append("g")
+        .attr("transform", `translate(0, ${height})`)
+        .call(d3.axisBottom(x));
+
+      chart.append("g").call(d3.axisLeft(y));
+
+      [15, 75].forEach(value => {
+        chart.append("line")
+          .attr("x2", width)
+          .attr("y1", y(value))
+          .attr("y2", y(value))
+          .attr("stroke", "red")
+          .attr("stroke-dasharray", "5 4");
+
+        chart.append("text")
+          .attr("x", width + 5)
+          .attr("y", y(value) + 4)
+          .text(value);
+      });
+
+      chart.append("path")
+        .datum(data)
+        .attr("fill", "none")
+        .attr("stroke", "steelblue")
+        .attr("stroke-width", 1.5)
+        .attr("d", d3.line()
+          .x(d => x(d.date))
+          .y(d => y(d.pm25_city)));
+
+      data.slice()
+        .sort((a, b) => b.pm25_city - a.pm25_city)
+        .slice(0, 2)
+        .forEach((d, index) => {
+          chart.append("circle")
+            .attr("cx", x(d.date))
+            .attr("cy", y(d.pm25_city))
+            .attr("r", 5)
+            .attr("fill", "red");
+
+          chart.append("text")
+            .attr("x", x(d.date))
+            .attr("y", y(d.pm25_city) - 10 - index * 14)
+            .attr("text-anchor", "middle")
+            .attr("font-size", 11)
+            .text(`${formatDate(d.date)}: ${d.pm25_city}`);
+        });
+    });
+  </script>
+</body>
+</html>

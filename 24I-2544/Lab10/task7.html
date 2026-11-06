@@ -1,0 +1,72 @@
+<!doctype html>
+<html>
+<head>
+  <title>Lab 10 - Task 7</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+  <h2>Task 7: Monthly PM2.5 Range and Mean</h2>
+  <svg width="900" height="450"></svg>
+
+  <script>
+    d3.csv("air_quality_2025.csv").then(data => {
+      const parseDate = d3.timeParse("%Y-%m-%d");
+
+      data.forEach(d => {
+        d.date = parseDate(d.date);
+        d.pm25_city = +d.pm25_city;
+      });
+
+      const monthly = d3.groups(data, d => +d3.timeMonth(d.date))
+        .map(([key, values]) => ({
+          month: new Date(+key),
+          min: d3.min(values, d => d.pm25_city),
+          max: d3.max(values, d => d.pm25_city),
+          mean: d3.mean(values, d => d.pm25_city)
+        }))
+        .sort((a, b) => a.month - b.month);
+
+      const svg = d3.select("svg");
+      const margin = { top: 20, right: 30, bottom: 45, left: 55 };
+      const width = 815;
+      const height = 370;
+      const chart = svg.append("g")
+        .attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+      const x = d3.scaleTime()
+        .domain(d3.extent(monthly, d => d.month))
+        .range([0, width]);
+
+      const y = d3.scaleLinear()
+        .domain([0, d3.max(monthly, d => d.max) * 1.1])
+        .range([height, 0]);
+
+      chart.append("g")
+        .attr("transform", `translate(0, ${height})`)
+        .call(d3.axisBottom(x)
+          .ticks(d3.timeMonth.every(1))
+          .tickFormat(d3.timeFormat("%b")));
+
+      chart.append("g").call(d3.axisLeft(y));
+
+      chart.append("path")
+        .datum(monthly)
+        .attr("fill", "lightsteelblue")
+        .attr("opacity", 0.7)
+        .attr("d", d3.area()
+          .x(d => x(d.month))
+          .y0(d => y(d.min))
+          .y1(d => y(d.max)));
+
+      chart.append("path")
+        .datum(monthly)
+        .attr("fill", "none")
+        .attr("stroke", "navy")
+        .attr("stroke-width", 2)
+        .attr("d", d3.line()
+          .x(d => x(d.month))
+          .y(d => y(d.mean)));
+    });
+  </script>
+</body>
+</html>

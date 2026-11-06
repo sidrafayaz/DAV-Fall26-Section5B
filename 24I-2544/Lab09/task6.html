@@ -1,0 +1,210 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Combined Spatial Encoding Map</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <h2>Combined Spatial Encoding Map</h2>
+    <svg width="900" height="650"></svg>
+
+    <script>
+        var svg = d3.select("svg");
+
+        Promise.all([
+            d3.csv("pakistan_cities.csv", d3.autoType),
+            d3.csv("flights.csv", d3.autoType),
+            d3.json("custom.geo.json")
+        ]).then(function(results) {
+            var cities = results[0];
+            var flights = results[1];
+            var world = results[2];
+
+            var pakistan = world.features.find(function(d) {
+                var p = d.properties;
+                return Object.values(p).some(function(value) {
+                    return String(value).toUpperCase() === "PAK";
+                });
+            });
+
+            var projection = d3.geoMercator()
+                .center([69.5, 30.5])
+                .scale(1800)
+                .translate([450, 320]);
+
+            var path = d3.geoPath().projection(projection);
+
+            if (pakistan) {
+                svg.append("path")
+                    .datum(pakistan)
+                    .attr("d", path)
+                    .attr("fill", "#eeeeee")
+                    .attr("stroke", "#555555");
+            }
+
+            var cityNames = cities.map(function(d) {
+                return d.name;
+            });
+
+            var validFlights = flights.filter(function(d) {
+                return cityNames.includes(d.source) &&
+                       cityNames.includes(d.target);
+            });
+
+            var routeCounts = {};
+
+            cities.forEach(function(city) {
+                routeCounts[city.name] = validFlights.filter(function(flight) {
+                    return flight.source === city.name ||
+                           flight.target === city.name;
+                }).length;
+            });
+
+            var radius = d3.scaleSqrt()
+                .domain([0, d3.max(cities, function(d) {
+                    return d.pop;
+                })])
+                .range([4, 25]);
+
+            var routeLines = svg.selectAll(".route")
+                .data(validFlights)
+                .enter()
+                .append("line")
+                .attr("class", "route")
+                .attr("x1", function(d) {
+                    var city = cities.find(function(c) {
+                        return c.name === d.source;
+                    });
+                    return projection([city.lon, city.lat])[0];
+                })
+                .attr("y1", function(d) {
+                    var city = cities.find(function(c) {
+                        return c.name === d.source;
+                    });
+                    return projection([city.lon, city.lat])[1];
+                })
+                .attr("x2", function(d) {
+                    var city = cities.find(function(c) {
+                        return c.name === d.target;
+                    });
+                    return projection([city.lon, city.lat])[0];
+                })
+                .attr("y2", function(d) {
+                    var city = cities.find(function(c) {
+                        return c.name === d.target;
+                    });
+                    return projection([city.lon, city.lat])[1];
+                })
+                .attr("stroke", "#777777")
+                .attr("stroke-opacity", 0.5)
+                .attr("stroke-width", function(d) {
+                    return d.flights_per_week || 1;
+                });
+
+            var cityCircles = svg.selectAll(".city")
+                .data(cities)
+                .enter()
+                .append("circle")
+                .attr("class", "city")
+                .attr("cx", function(d) {
+                    return projection([d.lon, d.lat])[0];
+                })
+                .attr("cy", function(d) {
+                    return projection([d.lon, d.lat])[1];
+                })
+                .attr("r", function(d) {
+                    return radius(d.pop);
+                })
+                .attr("fill", function(d) {
+                    return routeCounts[d.name] >= 4 ? "orange" : "steelblue";
+                })
+                .attr("fill-opacity", 0.75)
+                .attr("stroke", "black")
+                .on("mouseover", function(event, city) {
+                    routeLines
+                        .attr("stroke-opacity", function(flight) {
+                            return flight.source === city.name ||
+                                   flight.target === city.name ? 1 : 0.08;
+                        })
+                        .attr("stroke", function(flight) {
+                            return flight.source === city.name ||
+                                   flight.target === city.name ? "red" : "#777777";
+                        });
+                })
+                .on("mouseout", function() {
+                    routeLines
+                        .attr("stroke", "#777777")
+                        .attr("stroke-opacity", 0.5);
+                });
+
+            cityCircles.append("title")
+                .text(function(d) {
+                    return d.name +
+                        "\nPopulation: " + d.pop + " million" +
+                        "\nRoutes: " + routeCounts[d.name];
+                });
+
+            svg.selectAll(".city-label")
+                .data(cities.filter(function(d) {
+                    return d.pop > 1;
+                }))
+                .enter()
+                .append("text")
+                .attr("class", "city-label")
+                .attr("x", function(d) {
+                    return projection([d.lon, d.lat])[0] + 8;
+                })
+                .attr("y", function(d) {
+                    return projection([d.lon, d.lat])[1] + 4;
+                })
+                .text(function(d) {
+                    return d.name;
+                })
+                .attr("font-size", "11px")
+                .attr("pointer-events", "none");
+
+            svg.append("circle")
+                .attr("cx", 30)
+                .attr("cy", 590)
+                .attr("r", 7)
+                .attr("fill", "orange");
+
+            svg.append("text")
+                .attr("x", 45)
+                .attr("y", 594)
+                .text("Hub (4 or more routes)")
+                .attr("font-size", "12px");
+
+            svg.append("circle")
+                .attr("cx", 30)
+                .attr("cy", 615)
+                .attr("r", 7)
+                .attr("fill", "steelblue");
+
+            svg.append("text")
+                .attr("x", 45)
+                .attr("y", 619)
+                .text("Non-hub")
+                .attr("font-size", "12px");
+
+            svg.append("line")
+                .attr("x1", 250)
+                .attr("y1", 590)
+                .attr("x2", 290)
+                .attr("y2", 590)
+                .attr("stroke", "#777777")
+                .attr("stroke-width", 3);
+
+            svg.append("text")
+                .attr("x", 300)
+                .attr("y", 594)
+                .text("Route width = flights per week")
+                .attr("font-size", "12px");
+
+        }).catch(function(error) {
+            console.error(error);
+        });
+    </script>
+</body>
+</html>

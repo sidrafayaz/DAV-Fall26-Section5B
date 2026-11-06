@@ -1,0 +1,109 @@
+<!doctype html>
+<html>
+<head>
+  <title>Lab 10 - Task 9</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+  <h2>Task 9: Brush to Zoom</h2>
+  <button id="reset">Reset</button>
+  <br><br>
+  <svg id="main" width="900" height="380"></svg>
+  <svg id="overview" width="900" height="150"></svg>
+
+  <script>
+    d3.csv("air_quality_2025.csv").then(data => {
+      const parseDate = d3.timeParse("%Y-%m-%d");
+      const width = 815;
+      const mainHeight = 310;
+      const overviewHeight = 100;
+
+      data.forEach(d => {
+        d.date = parseDate(d.date);
+        d.pm25_city = +d.pm25_city;
+      });
+
+      data.sort((a, b) => a.date - b.date);
+
+      const y = d3.scaleLinear()
+        .domain([0, d3.max(data, d => d.pm25_city) * 1.1])
+        .range([mainHeight, 0]);
+
+      const fullX = d3.scaleTime()
+        .domain(d3.extent(data, d => d.date))
+        .range([0, width]);
+
+      const main = d3.select("#main").append("g")
+        .attr("transform", "translate(55, 20)");
+
+      const overview = d3.select("#overview").append("g")
+        .attr("transform", "translate(55, 15)");
+
+      const createLine = x => d3.line()
+        .x(d => x(d.date))
+        .y(d => y(d.pm25_city));
+
+      main.append("g")
+        .attr("class", "x-axis")
+        .attr("transform", `translate(0, ${mainHeight})`);
+
+      main.append("g")
+        .attr("class", "y-axis")
+        .call(d3.axisLeft(y));
+
+      main.append("path")
+        .attr("class", "main-line")
+        .attr("fill", "none")
+        .attr("stroke", "steelblue")
+        .attr("stroke-width", 1.5);
+
+      function update(domain = fullX.domain()) {
+        const x = fullX.copy().domain(domain);
+        const visibleData = data.filter(d =>
+          d.date >= domain[0] && d.date <= domain[1]
+        );
+
+        main.select(".x-axis").call(d3.axisBottom(x));
+        main.select(".main-line")
+          .datum(visibleData)
+          .attr("d", createLine(x));
+      }
+
+      const overviewY = d3.scaleLinear()
+        .domain(y.domain())
+        .range([overviewHeight, 0]);
+
+      overview.append("path")
+        .datum(data)
+        .attr("fill", "none")
+        .attr("stroke", "#888")
+        .attr("d", d3.line()
+          .x(d => fullX(d.date))
+          .y(d => overviewY(d.pm25_city)));
+
+      overview.append("g")
+        .attr("transform", `translate(0, ${overviewHeight})`)
+        .call(d3.axisBottom(fullX).ticks(6));
+
+      const brush = d3.brushX()
+        .extent([[0, 0], [width, overviewHeight]])
+        .on("brush end", event => {
+          if (event.selection) {
+            update(event.selection.map(fullX.invert));
+          }
+        });
+
+      overview.append("g")
+        .attr("class", "brush")
+        .call(brush);
+
+      document.querySelector("#reset").onclick = () => {
+        overview.select(".brush").call(brush.move, null);
+        update();
+      };
+
+      update();
+    });
+  </script>
+</body>
+</html>

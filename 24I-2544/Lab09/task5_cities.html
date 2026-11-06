@@ -1,0 +1,92 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>T5: Pakistan Cities Point Map</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <h2>Task 5: Pakistan Cities Point Map</h2>
+    <svg width="900" height="650"></svg>
+
+    <script>
+        var svg = d3.select("svg");
+
+        Promise.all([
+            d3.csv("pakistan_cities.csv", d3.autoType),
+            d3.json("custom.geo.json")
+        ]).then(function(results) {
+            var cities = results[0];
+            var world = results[1];
+
+            var pakistan = world.features.find(function(d) {
+                var p = d.properties;
+                return Object.values(p).some(function(value) {
+                    return String(value).toUpperCase() === "PAK";
+                });
+            });
+
+            var projection = d3.geoMercator()
+                .center([69.5, 30.5])
+                .scale(1800)
+                .translate([450, 320]);
+
+            var path = d3.geoPath().projection(projection);
+
+            if (pakistan) {
+                svg.append("path")
+                    .datum(pakistan)
+                    .attr("d", path)
+                    .attr("fill", "#eeeeee")
+                    .attr("stroke", "#555555");
+            }
+
+            var radius = d3.scaleSqrt()
+                .domain([0, d3.max(cities, function(d) {
+                    return d.pop;
+                })])
+                .range([4, 25]);
+
+            svg.selectAll("circle")
+                .data(cities)
+                .enter()
+                .append("circle")
+                .attr("cx", function(d) {
+                    return projection([d.lon, d.lat])[0];
+                })
+                .attr("cy", function(d) {
+                    return projection([d.lon, d.lat])[1];
+                })
+                .attr("r", function(d) {
+                    return radius(d.pop);
+                })
+                .attr("fill", "steelblue")
+                .attr("fill-opacity", 0.6)
+                .attr("stroke", "black")
+                .append("title")
+                .text(function(d) {
+                    return d.name + ": " + d.pop + " million people";
+                });
+
+            svg.selectAll("text")
+                .data(cities.filter(function(d) {
+                    return d.pop > 1;
+                }))
+                .enter()
+                .append("text")
+                .attr("x", function(d) {
+                    return projection([d.lon, d.lat])[0] + 8;
+                })
+                .attr("y", function(d) {
+                    return projection([d.lon, d.lat])[1] + 4;
+                })
+                .text(function(d) {
+                    return d.name;
+                })
+                .attr("font-size", "11px");
+        }).catch(function(error) {
+            console.error(error);
+        });
+    </script>
+</body>
+</html>

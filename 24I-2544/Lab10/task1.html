@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+<head>
+  <title>Lab 10 - Task 1</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+  <h2>Task 1: Dataset Overview</h2>
+  <p id="out"></p>
+
+  <script>
+    d3.csv("air_quality_2025.csv").then(data => {
+      const parseDate = d3.timeParse("%Y-%m-%d");
+      const formatDate = d3.timeFormat("%d %b %Y");
+
+      data.forEach(d => {
+        d.date = parseDate(d.date);
+      });
+
+      data.sort((a, b) => a.date - b.date);
+
+      document.querySelector("#out").innerHTML = `
+        Rows: ${data.length}<br>
+        First date: ${formatDate(data[0].date)}<br>
+        Last date: ${formatDate(data.at(-1).date)}<br>
+        Expected days: 365<br>
+        Missing days: ${365 - data.length}
+      `;
+    });
+  </script>
+</body>
+</html>
