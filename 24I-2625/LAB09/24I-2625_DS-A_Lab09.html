@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lab 9 - Hierarchies, Networks and Maps (D3.js)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<style>
+  body { font-family: Arial, Helvetica, sans-serif; margin: 20px auto; max-width: 1000px; color: #222; }
+  h1 { font-size: 24px; margin-bottom: 4px; }
+  h2 { font-size: 18px; margin: 36px 0 4px; border-bottom: 2px solid #ddd; padding-bottom: 4px; }
+  p.note { margin: 2px 0 8px; color: #555; font-size: 13px; }
+  svg { background: #fff; border: 1px solid #e3e3e3; display: block; }
+  .tooltip { position: absolute; pointer-events: none; background: rgba(30,30,30,.92); color: #fff;
+             padding: 6px 9px; border-radius: 4px; font-size: 12px; line-height: 1.4; opacity: 0; z-index: 10; }
+  .halo { paint-order: stroke; stroke: #fff; stroke-width: 3px; stroke-linejoin: round; }
+  .chart-title { font-size: 16px; font-weight: bold; }
+  .legend text { font-size: 12px; }
+</style>
+</head>
+<body>
+<h1>Lab 9: Hierarchical, Network and Geospatial Visualizations</h1>
+<p class="note">Data Analysis and Visualization - D3.js v7. Open this page through a local server (for example, right-click the HTML file and select "Open with Live Server"). Browsers block the dataset requests when this file is opened directly.</p>
+<p class="note" id="load-status" role="status" aria-live="polite">Loading datasets…</p>
+
+<h2>Task 1: Course Enrollment Treemap</h2>
+<svg id="t1" width="960" height="520"></svg>
+
+<h2>Task 2: University Structure Dendrogram</h2>
+<p class="note">Click a department to collapse or expand its courses.</p>
+<svg id="t2" width="960" height="520"></svg>
+
+<h2>Task 3: Flight Route Network</h2>
+<p class="note">Drag the cities. Hover over a city to highlight its routes.</p>
+<svg id="t3" width="960" height="560"></svg>
+
+<h2>Task 4: World Population Choropleth</h2>
+<svg id="t4" width="960" height="540"></svg>
+
+<h2>Task 5: Pakistan Cities Point Map</h2>
+<svg id="t5" width="960" height="680"></svg>
+
+<h2>Task 6: Combined Spatial Encoding Map</h2>
+<svg id="t6" width="960" height="680"></svg>
+
+<div class="tooltip" id="tip"></div>
+
+<script>
+const tip = d3.select("#tip");
+function showTip(event, html) {
+  tip.html(html).style("opacity", 1)
+     .style("left", (event.pageX + 14) + "px").style("top", (event.pageY - 10) + "px");
+}
+function hideTip() { tip.style("opacity", 0); }
+
+const datasetFiles = [
+  "dataset/university.csv",
+  "dataset/flights.csv",
+  "dataset/population.csv",
+  "dataset/pakistan_cities.csv",
+  "dataset/world.geojson"
+];
+const loadStatus = d3.select("#load-status");
+
+if (window.location.protocol === "file:") {
+  loadStatus.text("Datasets cannot load from a file:// page. Start a local server (such as VS Code Live Server), then reopen this page from the server URL.");
+} else {
+  Promise.all([
+    d3.csv(new URL(datasetFiles[0], document.baseURI), d3.autoType),
+    d3.csv(new URL(datasetFiles[1], document.baseURI), d3.autoType),
+    d3.csv(new URL(datasetFiles[2], document.baseURI), d3.autoType),
+    d3.csv(new URL(datasetFiles[3], document.baseURI), d3.autoType),
+    d3.json(new URL(datasetFiles[4], document.baseURI))
+  ]).then(([uni, flights, pop, cities, world]) => {
+    if (!world || !Array.isArray(world.features)) {
+      throw new Error("dataset/world.geojson is not a valid GeoJSON FeatureCollection.");
+    }
+    if (!uni.length || !flights.length || !pop.length || !cities.length) {
+      throw new Error("One or more CSV datasets are empty.");
+    }
+
+    task1(uni); task2(uni); task3(flights);
+    task4(pop, world); task5(cities, world); task6(cities, flights, world);
+    loadStatus.text("Datasets loaded successfully.");
+  }).catch(err => {
+    console.error("Data loading failed:", err);
+    loadStatus.text(`Data loading failed: ${err.message}. Check that the dataset folder is next to this HTML file and serve the folder through a local server.`);
+    loadStatus.style("color", "#b00020");
+  });
+}
+
+/* shared: build University -> Department -> Course object using d3.group */
+function buildHierarchy(data) {
+  return {
+    name: "University",
+    children: Array.from(d3.group(data, d => d.department), ([dep, rows]) => ({
+      name: dep,
+      children: rows.map(r => ({ name: r.course, department: dep, value: r.students }))
+    }))
+  };
+}
+
+/* ---------------- Task 1: Treemap ---------------- */
+function task1(data) {
+  const svg = d3.select("#t1"), W = +svg.attr("width"), H = +svg.attr("height");
+  const top = 50;
+  const root = d3.hierarchy(buildHierarchy(data)).sum(d => d.value).sort((a, b) => b.value - a.value);
+  d3.treemap().size([W, H - top]).paddingInner(2).paddingOuter(3).paddingTop(20).round(true)(root);
+
+  const depts = root.children.map(d => d.data.name);
+  const color = d3.scaleOrdinal().domain(depts).range(d3.schemeTableau10.slice(0, depts.length));
+
+  svg.append("text").attr("class", "chart-title").attr("x", 10).attr("y", 24)
+     .text("Course Enrollment by Department (area = number of students)");
+
+  const g = svg.append("g").attr("transform", `translate(0,${top})`);
+
+  // department group boxes and labels
+  const dg = g.selectAll("g.dep").data(root.children).join("g").attr("class", "dep");
+  dg.append("rect").attr("x", d => d.x0).attr("y", d => d.y0)
+    .attr("width", d => d.x1 - d.x0).attr("height", d => d.y1 - d.y0)
+    .attr("fill", d => color(d.data.name)).attr("fill-opacity", 0.25).attr("stroke", d => color(d.data.name));
+  dg.append("text").attr("x", d => d.x0 + 5).attr("y", d => d.y0 + 14)
+    .attr("font-size", 12).attr("font-weight", "bold").text(d => `${d.data.name} (${d.value})`);
+
+  // course rectangles
+  const leaf = g.selectAll("g.leaf").data(root.leaves()).join("g").attr("class", "leaf");
+  leaf.append("rect").attr("x", d => d.x0).attr("y", d => d.y0)
+    .attr("width", d => d.x1 - d.x0).attr("height", d => d.y1 - d.y0)
+    .attr("fill", d => color(d.data.department)).attr("stroke", "#fff")
+    .on("mousemove", (e, d) => showTip(e, `<b>${d.data.name}</b><br>Department: ${d.data.department}<br>Students: ${d.value}`))
+    .on("mouseout", hideTip)
+    .on("mouseover", function () { d3.select(this).attr("opacity", 0.8); })
+    .on("mouseleave", function () { d3.select(this).attr("opacity", 1); });
+  leaf.append("text").attr("x", d => d.x0 + 5).attr("y", d => d.y0 + 16)
+    .attr("font-size", 12).attr("fill", "#fff").attr("pointer-events", "none")
+    .text(d => (d.x1 - d.x0) > 60 ? d.data.name : "");
+
+  // legend
+  const lg = svg.append("g").attr("class", "legend").attr("transform", `translate(${W - 460},12)`);
+  depts.forEach((n, i) => {
+    const item = lg.append("g").attr("transform", `translate(${i * 115},0)`);
+    item.append("rect").attr("width", 12).attr("height", 12).attr("fill", color(n));
+    item.append("text").attr("x", 17).attr("y", 11).text(n);
+  });
+}
+
+/* ---------------- Task 2: Dendrogram ---------------- */
+function task2(data) {
+  const svg = d3.select("#t2"), W = +svg.attr("width"), H = +svg.attr("height");
+  const m = { top: 20, right: 200, bottom: 20, left: 130 };
+  const g = svg.append("g").attr("transform", `translate(${m.left},${m.top})`);
+  const root = d3.hierarchy(buildHierarchy(data));
+  const depthColor = d3.scaleOrdinal().domain([0, 1, 2]).range(["#444", "#e15759", "#4e79a7"]);
+  const link = d3.linkHorizontal().x(d => d.y).y(d => d.x);
+
+  function render() {
+    d3.cluster().size([H - m.top - m.bottom, W - m.left - m.right])(root);
+    g.selectAll("*").remove();
+
+    g.append("g").selectAll("path").data(root.links()).join("path")
+      .attr("d", link).attr("fill", "none").attr("stroke", "#aaa").attr("stroke-width", 1.5);
+
+    const node = g.append("g").selectAll("g").data(root.descendants()).join("g")
+      .attr("transform", d => `translate(${d.y},${d.x})`);
+
+    node.append("circle").attr("r", d => d.depth === 0 ? 9 : d.depth === 1 ? 7 : 5)
+      .attr("fill", d => depthColor(d.depth)).attr("stroke", "#fff").attr("stroke-width", 1.5)
+      .style("cursor", d => d.depth === 1 ? "pointer" : "default")
+      .on("click", (e, d) => {
+        if (d.depth !== 1) return;
+        if (d.children) { d._children = d.children; d.children = null; }
+        else { d.children = d._children; d._children = null; }
+        render();
+      });
+
+    // leaf labels on the right, parent labels on the left (above the node, clear of the links)
+    node.append("text").attr("class", "halo").attr("font-size", 12)
+      .attr("dy", d => d.depth === 0 ? "0.32em" : d.children || d._children ? "-0.9em" : "0.32em")
+      .attr("x", d => d.children || d._children ? -10 : 10)
+      .attr("text-anchor", d => d.children || d._children ? "end" : "start")
+      .attr("font-weight", d => d.depth < 2 ? "bold" : "normal")
+      .text(d => d.data.name + (d._children ? " (+" + d._children.length + ")" : ""));
+  }
+  render();
+
+  const lg = svg.append("g").attr("class", "legend").attr("transform", `translate(${W - 150},20)`);
+  [["Root", 0], ["Department", 1], ["Course", 2]].forEach(([n, i], k) => {
+    const it = lg.append("g").attr("transform", `translate(0,${k * 20})`);
+    it.append("circle").attr("r", 6).attr("cx", 6).attr("cy", 6).attr("fill", depthColor(i));
+    it.append("text").attr("x", 18).attr("y", 10).text(n);
+  });
+}
+
+/* ---------------- Task 3: Force-directed flight network ---------------- */
+function task3(flights) {
+  const svg = d3.select("#t3"), W = +svg.attr("width"), H = +svg.attr("height");
+  const links = flights.map(d => ({ ...d }));
+  const names = new Set(); links.forEach(l => { names.add(l.source); names.add(l.target); });
+  const nodes = Array.from(names, id => ({ id, degree: links.filter(l => l.source === id || l.target === id).length }));
+
+  const wScale = d3.scaleLinear().domain(d3.extent(links, d => d.flights)).range([1, 10]);
+  const rScale = d3.scaleSqrt().domain([0, d3.max(nodes, d => d.degree)]).range([6, 28]);
+  const color = d3.scaleSequential(d3.interpolateBlues).domain([0, d3.max(nodes, d => d.degree) + 2]);
+
+  svg.append("text").attr("class", "chart-title").attr("x", 10).attr("y", 24)
+     .text("Weekly flights between Pakistani cities (width = flights, size = number of routes)");
+
+  const sim = d3.forceSimulation(nodes)
+    .force("link", d3.forceLink(links).id(d => d.id).distance(d => 220 - wScale(d.flights) * 10))
+    .force("charge", d3.forceManyBody().strength(-500))
+    .force("center", d3.forceCenter(W / 2, H / 2 + 15))
+    .force("collide", d3.forceCollide(d => rScale(d.degree) + 8));
+
+  const link = svg.append("g").attr("stroke", "#888").attr("stroke-opacity", 0.55)
+    .selectAll("line").data(links).join("line").attr("stroke-width", d => wScale(d.flights));
+  link.append("title").text(d => `${d.source.id || d.source} - ${d.target.id || d.target}: ${d.flights} flights/week`);
+
+  const node = svg.append("g").selectAll("g").data(nodes).join("g").style("cursor", "grab");
+  node.append("circle").attr("r", d => rScale(d.degree)).attr("fill", d => color(d.degree))
+    .attr("stroke", "#1f3b63").attr("stroke-width", 1.5);
+  node.append("text").attr("class", "halo").attr("text-anchor", "middle").attr("font-size", 12)
+    .attr("dy", d => -rScale(d.degree) - 5).text(d => d.id);
+
+  node.call(d3.drag()
+    .on("start", (e, d) => { if (!e.active) sim.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
+    .on("drag", (e, d) => { d.fx = e.x; d.fy = e.y; })
+    .on("end", (e, d) => { if (!e.active) sim.alphaTarget(0); d.fx = null; d.fy = null; }));
+
+  node.on("mouseover", (e, d) => {
+    const linked = new Set([d.id]);
+    links.forEach(l => { if (l.source.id === d.id) linked.add(l.target.id); if (l.target.id === d.id) linked.add(l.source.id); });
+    link.attr("stroke-opacity", l => (l.source.id === d.id || l.target.id === d.id) ? 0.95 : 0.06)
+        .attr("stroke", l => (l.source.id === d.id || l.target.id === d.id) ? "#d62728" : "#888");
+    node.attr("opacity", n => linked.has(n.id) ? 1 : 0.15);
+    showTip(e, `<b>${d.id}</b><br>Routes: ${d.degree}`);
+  }).on("mousemove", (e, d) => showTip(e, `<b>${d.id}</b><br>Routes: ${d.degree}`))
+    .on("mouseout", () => {
+      link.attr("stroke-opacity", 0.55).attr("stroke", "#888"); node.attr("opacity", 1); hideTip();
+    });
+
+  sim.on("tick", () => {
+    nodes.forEach(d => { d.x = Math.max(40, Math.min(W - 40, d.x)); d.y = Math.max(50, Math.min(H - 30, d.y)); });
+    link.attr("x1", d => d.source.x).attr("y1", d => d.source.y).attr("x2", d => d.target.x).attr("y2", d => d.target.y);
+    node.attr("transform", d => `translate(${d.x},${d.y})`);
+  });
+}
+
+/* ---------------- Task 4: World choropleth ---------------- */
+function task4(pop, world) {
+  const svg = d3.select("#t4"), W = +svg.attr("width"), H = +svg.attr("height");
+  const byId = new Map(pop.map(d => [d.id, d]));
+  const features = world.features.filter(f => f.id !== "ATA");
+  const projection = d3.geoNaturalEarth1().fitExtent([[10, 40], [W - 10, H - 60]], { type: "FeatureCollection", features });
+  const path = d3.geoPath(projection);
+  const maxPop = d3.max(pop, d => d.population_millions);
+  const color = d3.scaleSequentialSqrt(d3.interpolateYlOrRd).domain([0, maxPop]);
+
+  svg.append("text").attr("class", "chart-title").attr("x", 10).attr("y", 24).text("World Population by Country (millions)");
+
+  svg.append("g").selectAll("path").data(features).join("path")
+    .attr("d", path).attr("stroke", "#fff").attr("stroke-width", 0.5)
+    .attr("fill", f => byId.has(f.id) ? color(byId.get(f.id).population_millions) : "#e0e0e0")
+    .on("mouseover", function () { d3.select(this).raise().attr("stroke", "#000").attr("stroke-width", 1.6); })
+    .on("mousemove", (e, f) => {
+      const r = byId.get(f.id);
+      showTip(e, `<b>${f.properties.name}</b><br>${r ? "Population: " + r.population_millions + " million" : "No data"}`);
+    })
+    .on("mouseout", function () { d3.select(this).attr("stroke", "#fff").attr("stroke-width", 0.5); hideTip(); });
+
+  // legend: gradient bar with min and max labels
+  const defs = svg.append("defs");
+  const grad = defs.append("linearGradient").attr("id", "popGrad");
+  d3.range(0, 1.001, 0.1).forEach(t => grad.append("stop").attr("offset", t * 100 + "%").attr("stop-color", color(maxPop * t * t)));
+  const lg = svg.append("g").attr("class", "legend").attr("transform", `translate(${W / 2 - 150},${H - 40})`);
+  lg.append("rect").attr("width", 300).attr("height", 12).attr("fill", "url(#popGrad)").attr("stroke", "#999");
+  lg.append("text").attr("y", 28).text("0");
+  lg.append("text").attr("x", 300).attr("y", 28).attr("text-anchor", "end").text(maxPop + " million");
+  lg.append("rect").attr("x", 330).attr("width", 12).attr("height", 12).attr("fill", "#e0e0e0").attr("stroke", "#999");
+  lg.append("text").attr("x", 348).attr("y", 11).text("No data");
+}
+
+/* shared projection for Pakistan maps */
+function pakistanProjection(W, H) {
+  return d3.geoMercator().center([69.5, 30.5]).scale(2100).translate([W / 2, H / 2 + 10]);
+}
+function drawBaseMap(svg, world, projection) {
+  const path = d3.geoPath(projection);
+  svg.append("g").selectAll("path").data(world.features).join("path").attr("d", path)
+    .attr("fill", f => f.id === "PAK" ? "#f1ecd9" : "#eceff1").attr("stroke", "#999").attr("stroke-width", f => f.id === "PAK" ? 1.4 : 0.6);
+  // neighbouring country names for orientation
+  const names = { IND: "India", AFG: "Afghanistan", IRN: "Iran", CHN: "China", PAK: "PAKISTAN" };
+  svg.append("g").selectAll("text").data(world.features.filter(f => names[f.id])).join("text")
+    .attr("transform", f => { const c = path.centroid(f); return `translate(${f.id === "PAK" ? projection([69.3, 29.3]) : f.id === "IND" ? projection([77, 27]) : f.id === "CHN" ? projection([80, 36]) : c})`; })
+    .attr("text-anchor", "middle").attr("font-size", f => f.id === "PAK" ? 15 : 12).attr("fill", "#8a8a8a")
+    .attr("font-weight", f => f.id === "PAK" ? "bold" : "normal").attr("letter-spacing", f => f.id === "PAK" ? 3 : 0)
+    .text(f => names[f.id]);
+}
+
+/* ---------------- Task 5: Pakistan cities point map ---------------- */
+function task5(cities, world) {
+  const svg = d3.select("#t5"), W = +svg.attr("width"), H = +svg.attr("height");
+  const projection = pakistanProjection(W, H);
+  drawBaseMap(svg, world, projection);
+  svg.append("text").attr("class", "chart-title").attr("x", 10).attr("y", 24)
+     .text("Largest Cities of Pakistan (circle area = population)");
+
+  const r = d3.scaleSqrt().domain([0, d3.max(cities, d => d.pop)]).range([0, 40]);
+  const sorted = cities.slice().sort((a, b) => b.pop - a.pop); // big circles first, small on top
+
+  svg.append("g").selectAll("circle").data(sorted).join("circle")
+    .attr("cx", d => projection([d.lon, d.lat])[0]).attr("cy", d => projection([d.lon, d.lat])[1])
+    .attr("r", d => r(d.pop)).attr("fill", "#4e79a7").attr("fill-opacity", 0.55)
+    .attr("stroke", "#1f3b63").attr("stroke-width", 1)
+    .on("mousemove", (e, d) => showTip(e, `<b>${d.name}</b><br>Population: ${d.pop} million`)).on("mouseout", hideTip);
+
+  svg.append("g").selectAll("text").data(cities.filter(d => d.pop > 1)).join("text").attr("class", "halo")
+    .attr("x", d => projection([d.lon, d.lat])[0]).attr("y", d => projection([d.lon, d.lat])[1] - r(d.pop) - 5)
+    .attr("text-anchor", "middle").attr("font-size", 12).attr("font-weight", "bold").text(d => d.name);
+
+  // size legend
+  const lg = svg.append("g").attr("class", "legend").attr("transform", `translate(${W - 120},${H - 130})`);
+  lg.append("text").attr("y", -8).attr("font-weight", "bold").text("Population (M)");
+  [1, 5, 15].forEach((v, i) => {
+    const cy = 100 - r(v);
+    lg.append("circle").attr("cx", 40).attr("cy", cy).attr("r", r(v)).attr("fill", "#4e79a7").attr("fill-opacity", 0.4).attr("stroke", "#1f3b63");
+    lg.append("text").attr("x", 90).attr("y", 100 - 2 * r(v) + 4).text(v);
+  });
+}
+
+/* ---------------- Task 6: Combined spatial encoding map ---------------- */
+function task6(cities, flights, world) {
+  const svg = d3.select("#t6"), W = +svg.attr("width"), H = +svg.attr("height");
+  const projection = pakistanProjection(W, H);
+  drawBaseMap(svg, world, projection);
+  svg.append("text").attr("class", "chart-title").attr("x", 10).attr("y", 24).text("Cities, Populations and Flight Routes");
+
+  const byName = new Map(cities.map(c => [c.name, c]));
+  const degree = new Map(cities.map(c => [c.name, 0]));
+  flights.forEach(f => { degree.set(f.source, (degree.get(f.source) || 0) + 1); degree.set(f.target, (degree.get(f.target) || 0) + 1); });
+  const isHub = c => degree.get(c.name) >= 4;
+
+  const routes = flights.filter(f => byName.has(f.source) && byName.has(f.target)).map(f => {
+    const a = projection([byName.get(f.source).lon, byName.get(f.source).lat]);
+    const b = projection([byName.get(f.target).lon, byName.get(f.target).lat]);
+    const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2, dx = b[0] - a[0], dy = b[1] - a[1];
+    return { ...f, a, b, d: `M${a[0]},${a[1]} Q${mx - dy * 0.12},${my + dx * 0.12} ${b[0]},${b[1]}` };
+  });
+
+  const w = d3.scaleLinear().domain(d3.extent(flights, d => d.flights)).range([1, 8]);
+  const r = d3.scaleSqrt().domain([0, d3.max(cities, d => d.pop)]).range([3, 30]);
+  const hubColor = "#e15759", otherColor = "#4e79a7";
+
+  // routes first
+  const route = svg.append("g").attr("fill", "none").attr("stroke", "#555").attr("stroke-opacity", 0.45)
+    .selectAll("path").data(routes).join("path").attr("d", d => d.d).attr("stroke-width", d => w(d.flights));
+  route.append("title").text(d => `${d.source} - ${d.target}: ${d.flights} flights/week`);
+
+  // cities on top
+  const sorted = cities.slice().sort((a, b) => b.pop - a.pop);
+  const cg = svg.append("g").selectAll("g").data(sorted).join("g")
+    .attr("transform", d => `translate(${projection([d.lon, d.lat])})`);
+  const circ = cg.append("circle").attr("r", d => r(d.pop)).attr("fill", d => isHub(d) ? hubColor : otherColor)
+    .attr("fill-opacity", 0.75).attr("stroke", "#222").attr("stroke-width", 1);
+  const lab = cg.append("text").attr("class", "halo").attr("font-size", 11).attr("x", d => r(d.pop) + 4).attr("y", 4).text(d => d.name);
+
+  cg.on("mouseover", (e, d) => {
+    const linked = new Set([d.name]);
+    flights.forEach(f => { if (f.source === d.name) linked.add(f.target); if (f.target === d.name) linked.add(f.source); });
+    route.attr("stroke-opacity", f => (f.source === d.name || f.target === d.name) ? 0.95 : 0.05)
+         .attr("stroke", f => (f.source === d.name || f.target === d.name) ? "#d62728" : "#555");
+    cg.attr("opacity", c => linked.has(c.name) ? 1 : 0.2);
+    showTip(e, `<b>${d.name}</b><br>Population: ${d.pop} million<br>Routes: ${degree.get(d.name)}${isHub(d) ? " (hub)" : ""}`);
+  }).on("mousemove", (e, d) => showTip(e, `<b>${d.name}</b><br>Population: ${d.pop} million<br>Routes: ${degree.get(d.name)}${isHub(d) ? " (hub)" : ""}`))
+    .on("mouseout", () => { route.attr("stroke-opacity", 0.45).attr("stroke", "#555"); cg.attr("opacity", 1); hideTip(); });
+
+  // legend explaining all four encodings
+  const lg = svg.append("g").attr("class", "legend").attr("transform", `translate(${W - 235},${H - 255})`);
+  lg.append("rect").attr("x", -10).attr("y", -22).attr("width", 235).attr("height", 245).attr("fill", "#fff").attr("fill-opacity", 0.9).attr("stroke", "#ccc");
+  lg.append("text").attr("y", -6).attr("font-weight", "bold").text("Legend");
+  lg.append("text").attr("y", 14).text("Position = real location (lon, lat)");
+  lg.append("text").attr("y", 40).attr("font-weight", "bold").text("Color");
+  [["Hub (4+ routes)", hubColor], ["Other city", otherColor]].forEach(([n, c], i) => {
+    lg.append("circle").attr("cx", 8).attr("cy", 56 + i * 20).attr("r", 6).attr("fill", c).attr("fill-opacity", 0.75).attr("stroke", "#222");
+    lg.append("text").attr("x", 22).attr("y", 60 + i * 20).text(n);
+  });
+  lg.append("text").attr("y", 108).attr("font-weight", "bold").text("Circle size = population (M)");
+  [1, 5, 15].forEach((v, i) => {
+    const cx = 20 + i * 62;
+    lg.append("circle").attr("cx", cx).attr("cy", 140 - r(v) + 6).attr("r", r(v)).attr("fill", "#bbb").attr("fill-opacity", 0.6).attr("stroke", "#222");
+    lg.append("text").attr("x", cx).attr("y", 164).attr("text-anchor", "middle").text(v);
+  });
+  lg.append("text").attr("y", 186).attr("font-weight", "bold").text("Line width = flights/week");
+  [5, 20, 40].forEach((v, i) => {
+    const x = i * 70;
+    lg.append("line").attr("x1", x).attr("x2", x + 40).attr("y1", 202).attr("y2", 202).attr("stroke", "#555").attr("stroke-width", w(v));
+    lg.append("text").attr("x", x + 20).attr("y", 218).attr("text-anchor", "middle").text(v);
+  });
+}
+</script>
+</body>
+</html>
