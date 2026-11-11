@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DAV Lab 8 - 24I-2513</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="lib/d3.v7.min.js"></script>
+</head>
+<body>
+  <h1>Data Analysis and Visualization Lab 8</h1>
+  <p>Muhammad Umar Nadeem | 24I-2513 | DS-B</p>
+  <h2>Task 1: Top 10 richest countries</h2>
+  <p>Prediction: I would expect the United States to be first in 2007 and also in 1952.</p>
+  <p><button id="year1952" aria-pressed="false">1952</button> <button id="year2007" aria-pressed="true">2007</button></p>
+  <h3 id="chart-title">Top 10 countries in 2007</h3>
+  <p>Income is GDP per capita, in inflation-adjusted international dollars.</p>
+  <div id="legend"></div>
+  <div class="chart"><svg id="top-chart" width="850" height="450" role="img" aria-label="Top ten countries by GDP per capita"></svg></div>
+  <p id="result" role="status"></p>
+  <h3>Answers</h3>
+  <ol>
+    <li><code>.slice(0, 10)</code> keeps the first ten rows after sorting GDP per capita in descending order.</li>
+    <li><code>.data(top10, d =&gt; d.country)</code> uses the country as a key so D3 can match each bar to the same country when the year changes.</li>
+    <li>The other bars look short in 1952 because Kuwait's GDP per capita is about 108,382, so it stretches the linear scale.</li>
+  </ol>
+  <p>My prediction was wrong: Norway is first in 2007 and Kuwait is first in 1952, so the richest country changes.</p>
+  <p>The 2007 top ten contains countries from Europe, Asia and the Americas, with none from Africa.</p>
+  <p><a href="bars.html">Task 2: All countries and debugging</a></p>
+  <script src="top10.js"></script>
+</body>
+</html>

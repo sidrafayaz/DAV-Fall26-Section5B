@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lab 8 Task 2 - Bars</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="lib/d3.v7.min.js"></script>
+</head>
+<body>
+  <h1>Task 2: One bar per country</h1>
+  <p>24I-2513 | DS-B</p>
+  <p>The page starts with the original problem. Use the buttons in order to see the fixes.</p>
+  <p>
+    <button id="original" aria-pressed="true">1. Original</button>
+    <button id="year" aria-pressed="false">2. Filter 2007</button>
+    <button id="readable" aria-pressed="false">3. Increase height</button>
+    <button id="top10" aria-pressed="false">4. Top 10 in 2007</button>
+  </p>
+  <p id="status" role="status"></p>
+  <div class="chart"><svg id="bars" role="img" aria-label="Country GDP per capita bars"></svg></div>
+  <h2>Debugging answers</h2>
+  <p>Console: The original chart has no JavaScript error; the problem is the data selection and layout.</p>
+  <p>Network: <code>dataset/gapminder.csv</code> loads successfully with status 200 through the local server.</p>
+  <p>Elements: The original SVG has 1,704 rectangles, each about 2.53 pixels tall.</p>
+  <ol>
+    <li>I expected 142 rectangles but got 1,704 because every country has 12 years of records, and I did not filter the year.</li>
+    <li>Each original bar is about 2.53 pixels tall, so the country names overlap and cannot be read properly.</li>
+    <li>After filtering 2007 there are 142 bars, but the chart is still crowded; increasing the height to allow about 22 pixels per country makes it readable.</li>
+    <li>Norway appears first after filtering for 2007, sorting by GDP per capita and taking the top ten; without the year filter, repeated Kuwait records can take the top positions.</li>
+  </ol>
+  <p><a href="24I-2513_DS-B_Lab08.html">Back to Task 1</a></p>
+  <script src="bars.js"></script>
+</body>
+</html>

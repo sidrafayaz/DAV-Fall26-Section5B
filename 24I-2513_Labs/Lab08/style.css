@@ -1,0 +1,12 @@
+body { font-family: Arial, sans-serif; margin: 25px auto; padding: 0 16px; max-width: 950px; color: #222; line-height: 1.5; }
+h1 { font-size: 26px; }
+h2 { font-size: 21px; }
+button { padding: 7px 12px; margin: 3px 2px; cursor: pointer; }
+button[aria-pressed="true"] { background: #ddd; border: 2px solid #444; }
+.chart { overflow-x: auto; }
+#legend span { display: inline-block; margin-right: 18px; }
+#legend i { display: inline-block; width: 12px; height: 12px; margin-right: 5px; }
+svg { font: 12px Arial, sans-serif; }
+li { margin-bottom: 8px; }
+code { background: #f3f3f3; }
+#tooltip { position: absolute; background: white; border: 1px solid #777; padding: 6px; pointer-events: none; }
