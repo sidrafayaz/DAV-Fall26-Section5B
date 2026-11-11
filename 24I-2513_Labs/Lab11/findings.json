@@ -1,0 +1,18 @@
+{
+  "rows": 14485,
+  "accuracy": 0.5426993441491198,
+  "baseline": 0.6269934414911978,
+  "macro_f1": 0.510190366789497,
+  "hardest_class": "neutral",
+  "largest_error_proxy": "Negation cue",
+  "largest_error_proxy_n": 1699,
+  "other_errors": 3463,
+  "service_airline": "American",
+  "service_pct": 39.86051502145923,
+  "operations_airline": "Delta",
+  "operations_pct": 40.6282722513089,
+  "peak_date": "2015-02-23",
+  "peak_negative": 2342,
+  "author_share": 0.07904729030031067,
+  "zero_retweet_negative_share": 0.9344857960801586
+}
