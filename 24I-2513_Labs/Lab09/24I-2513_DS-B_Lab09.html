@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lab 9 — Hierarchies, Networks and Maps</title>
+  <link rel="stylesheet" href="lab09.css">
+  <script src="lib/d3.v7.min.js"></script>
+</head>
+<body>
+  <header class="hero">
+    <h1>Data Analysis and Visualization - Lab 9</h1>
+    <p>Hierarchical, network and geospatial visualizations using D3.js</p>
+    <p><strong>Muhammad Umar Nadeem | 24I-2513 | DS-B</strong></p>
+  </header>
+
+  <main>
+    <section class="card" aria-labelledby="treemap-heading">
+      <div class="section-copy"><h2 id="treemap-heading">Task 1: Course Enrollment Treemap</h2><p>Rectangle area represents enrollment and color identifies the department.</p></div>
+      <div id="department-legend" class="legend" aria-label="Department color legend"></div>
+      <div class="chart-frame"><svg id="treemap" role="img" aria-label="Treemap of course enrollment grouped by department"></svg></div>
+    </section>
+
+    <section class="card" aria-labelledby="tree-heading">
+      <div class="section-copy"><h2 id="tree-heading">Task 2: University Structure Dendrogram</h2><p>Click a department node or label to collapse and expand its courses.</p></div>
+      <div class="legend depth-legend"><span><i class="root-dot"></i>University</span><span><i class="department-dot"></i>Department</span><span><i class="course-dot"></i>Course</span></div>
+      <div class="chart-frame"><svg id="dendrogram" role="img" aria-label="Collapsible university course dendrogram"></svg></div>
+    </section>
+
+    <section class="card" aria-labelledby="network-heading">
+      <div class="section-copy"><h2 id="network-heading">Task 3: Flight Route Network</h2><p>Circle size represents route degree and line width represents weekly flights. Drag or hover over a city.</p></div>
+      <div class="chart-frame"><svg id="network" role="img" aria-label="Force-directed network of flight routes between Pakistani cities"></svg></div>
+    </section>
+
+    <section class="card" aria-labelledby="world-heading">
+      <div class="section-copy"><h2 id="world-heading">Task 4: World Population Choropleth</h2><p>Color intensity represents population in millions. Countries without data are gray.</p></div>
+      <div id="population-legend" class="color-legend" aria-label="Population color legend"></div>
+      <div class="chart-frame"><svg id="world-map" role="img" aria-label="World map colored by population"></svg></div>
+    </section>
+
+    <section class="card" aria-labelledby="cities-heading">
+      <div class="section-copy"><h2 id="cities-heading">Task 5: Pakistan Cities Point Map</h2><p>Circle area represents population. Cities above one million residents are labeled.</p></div>
+      <div class="chart-frame"><svg id="cities-map" role="img" aria-label="Map of Pakistani cities sized by population"></svg></div>
+    </section>
+
+    <section class="card" aria-labelledby="combined-heading">
+      <div class="section-copy"><h2 id="combined-heading">Task 6: Combined Spatial Encoding Map</h2><p>Position shows location, circle size shows population, color marks hubs and line width shows weekly flights.</p></div>
+      <div id="combined-legend" class="legend" aria-label="Combined map encoding legend"></div>
+      <div class="chart-frame"><svg id="combined-map" role="img" aria-label="Combined map of city population and flight routes"></svg></div>
+    </section>
+  </main>
+
+  <div id="tooltip" class="tooltip" role="status" aria-live="polite"></div>
+  <footer>DAV Lab 9 - D3.js</footer>
+  <script src="lab09.js"></script>
+</body>
+</html>

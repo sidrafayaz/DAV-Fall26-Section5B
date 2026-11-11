@@ -1,0 +1,33 @@
+* { box-sizing: border-box; }
+body { margin: 0; background: #f5f5f5; color: #222; font-family: Arial, sans-serif; line-height: 1.5; }
+.hero { max-width: 1100px; margin: 0 auto; padding: 28px 20px 18px; background: white; border-bottom: 1px solid #ccc; }
+.hero h1 { margin: 0 0 8px; font-size: 30px; }
+.hero p { margin: 5px 0; }
+main { max-width: 1100px; margin: 0 auto; padding: 20px; }
+.card { overflow: hidden; margin-bottom: 25px; padding: 20px; border: 1px solid #ccc; background: white; }
+.section-copy { margin-bottom: 15px; }
+h2 { margin: 0 0 6px; font-size: 22px; }
+.section-copy p { margin: 0; color: #555; }
+.chart-frame { width: 100%; overflow-x: auto; }
+svg { display: block; width: 100%; min-width: 720px; font: 12px Arial, sans-serif; }
+#treemap { height: 520px; }
+#dendrogram { height: 530px; }
+#network { height: 570px; }
+#world-map { height: 540px; }
+#cities-map, #combined-map { height: 600px; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 10px 0 15px; color: #555; font-size: 13px; }
+.legend span { display: inline-flex; align-items: center; gap: 7px; }
+.legend i { display: inline-block; width: 11px; height: 11px; border-radius: 3px; }
+.depth-legend i { border-radius: 50%; }
+.root-dot { background: #173f35; }.department-dot { background: #d26a38; }.course-dot { background: #7eaa9c; }
+.color-legend { width: min(440px, 100%); margin: 10px 0 15px; color: #555; font-size: 12px; }
+.gradient { height: 11px; }
+.gradient-labels { display: flex; justify-content: space-between; margin-top: 5px; }
+.tooltip { position: fixed; z-index: 10; max-width: 260px; padding: 7px 9px; border: 1px solid #555; background: white; color: #222; font-size: 12px; pointer-events: none; opacity: 0; }
+.country { stroke: #fffdf8; stroke-width: .5; vector-effect: non-scaling-stroke; }
+.map-land { fill: #e6e4dc; stroke: #bbbdb5; stroke-width: .65; vector-effect: non-scaling-stroke; }
+.route { fill: none; stroke-linecap: round; }
+.node-label, .city-label { paint-order: stroke; stroke: #fffdf8; stroke-width: 3px; stroke-linejoin: round; }
+footer { padding: 15px; border-top: 1px solid #ccc; background: white; color: #555; text-align: center; font-size: 13px; }
+@media (max-width: 760px) { .hero h1 { font-size: 25px; } .card { padding: 15px; } }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
