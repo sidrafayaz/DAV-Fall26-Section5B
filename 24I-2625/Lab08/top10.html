@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 8 - Task 1: Top 10 richest countries</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    body { font-family: Georgia, serif; margin: 24px; color: #222; }
+    h1 { margin-bottom: 4px; }
+    p.sub { margin-top: 0; color: #555; }
+    .controls button {
+      font: inherit; padding: 6px 18px; margin-right: 8px; cursor: pointer;
+      border: 1px solid #888; background: #fff; border-radius: 4px;
+    }
+    .controls button.active { background: #222; color: #fff; border-color: #222; }
+    svg text { font-family: Georgia, serif; }
+    #tooltip {
+      position: absolute; pointer-events: none; opacity: 0;
+      background: #222; color: #fff; padding: 6px 10px; border-radius: 4px;
+      font-size: 14px;
+    }
+    .legend { margin-top: 8px; font-size: 14px; }
+    .legend span { display: inline-block; margin-right: 16px; }
+    .legend i { display: inline-block; width: 12px; height: 12px; margin-right: 5px; }
+  </style>
+</head>
+<body>
+  <h1>Which countries are the richest?</h1>
+  <p class="sub">Top 10 countries by income per person (GDP per capita)</p>
+
+  <div class="controls">
+    <button data-year="1952">1952</button>
+    <button data-year="2007" class="active">2007</button>
+  </div>
+
+  <svg id="chart"></svg>
+  <div class="legend" id="legend"></div>
+  <div id="tooltip"></div>
+
+<script>
+/* ---------- Step 1: Prediction (write yours before running!) ----------
+   My prediction: richest in 2007 = ______ ; same in 1952? ______
+   Actual: Norway in 2007, Kuwait in 1952.
+------------------------------------------------------------------------ */
+
+// Layout: margins leave room for the axes and the country names on the left
+const margin = { top: 20, right: 40, bottom: 50, left: 110 };
+const width = 800, height = 450;
+const innerW = width - margin.left - margin.right;
+const innerH = height - margin.top - margin.bottom;
+
+const svg = d3.select("#chart").attr("width", width).attr("height", height);
+const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+// Scales: x = income (length of bar), y = country (position of bar)
+const x = d3.scaleLinear().range([0, innerW]);
+const y = d3.scaleBand().range([0, innerH]).padding(0.2);
+
+// Step 3: one colour per continent
+const continents = ["Africa", "Americas", "Asia", "Europe", "Oceania"];
+const color = d3.scaleOrdinal().domain(continents).range(d3.schemeTableau10);
+
+// Axis groups
+const xAxisG = g.append("g").attr("transform", `translate(0,${innerH})`);
+const yAxisG = g.append("g");
+g.append("text")
+  .attr("x", innerW / 2).attr("y", innerH + 40)
+  .attr("text-anchor", "middle").attr("font-size", 13)
+  .text("Income per person (GDP per capita)");
+
+// Legend
+d3.select("#legend").selectAll("span").data(continents).join("span")
+  .html(d => `<i style="background:${color(d)}"></i>${d}`);
+
+const tooltip = d3.select("#tooltip");
+const fmt = d3.format(",.0f");
+
+d3.csv("dataset/gapminder.csv", d3.autoType).then(data => {
+
+  // Draws (or redraws) the chart for one year
+  function update(year) {
+    // Step 2: filter to the year, sort richest first, keep only the top 10
+    const top10 = data
+      .filter(d => d.year === year)
+      .sort((a, b) => d3.descending(a.gdpPercap, b.gdpPercap))
+      .slice(0, 10);
+
+    // Domains must be recalculated for each year
+    x.domain([0, d3.max(top10, d => d.gdpPercap)]);
+    y.domain(top10.map(d => d.country));
+
+    const t = d3.transition().duration(800);
+
+    // Step 5: key function (d => d.country) matches each bar to its country,
+    // so existing bars slide to their new place instead of being recreated.
+    g.selectAll("rect")
+      .data(top10, d => d.country)
+      .join(
+        enter => enter.append("rect")
+          .attr("x", 0)
+          .attr("y", d => y(d.country))
+          .attr("height", y.bandwidth())
+          .attr("width", 0)
+          .attr("fill", d => color(d.continent)),
+        update => update,
+        exit => exit.transition(t).attr("width", 0).remove()
+      )
+      // Step 4: hover tooltip with country name and income
+      .on("mouseover", (event, d) => {
+        tooltip.style("opacity", 1)
+          .html(`<b>${d.country}</b><br>${fmt(d.gdpPercap)}`);
+      })
+      .on("mousemove", event => {
+        tooltip.style("left", (event.pageX + 12) + "px")
+               .style("top", (event.pageY - 28) + "px");
+      })
+      .on("mouseout", () => tooltip.style("opacity", 0))
+      .transition(t)
+      .attr("y", d => y(d.country))
+      .attr("height", y.bandwidth())
+      .attr("width", d => x(d.gdpPercap))
+      .attr("fill", d => color(d.continent));
+
+    xAxisG.transition(t).call(d3.axisBottom(x).ticks(6, ",.0f"));
+    yAxisG.transition(t).call(d3.axisLeft(y));
+  }
+
+  update(2007);
+
+  // Step 5: the two buttons
+  d3.selectAll(".controls button").on("click", function () {
+    d3.selectAll(".controls button").classed("active", false);
+    d3.select(this).classed("active", true);
+    update(+this.dataset.year);
+  });
+});
+
+/* ---------- Step 6: Explain it back ----------
+   1. .slice(0, 10) keeps only the top 10 (after .sort puts the richest first).
+   2. d => d.country is the key function: it tells D3 which data row belongs to
+      which bar, so a bar is matched by country name instead of by position,
+      and can slide to its new spot when the year changes.
+   3. In 1952 Kuwait's income (about 108,000) is far above everyone else
+      (about 10,000-15,000), so the x scale stretches to fit Kuwait and the
+      other bars look short.
+------------------------------------------------------------ */
+</script>
+</body>
+</html>
