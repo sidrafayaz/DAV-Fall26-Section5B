@@ -1,0 +1,108 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Task 2 - Gapminder Bar Chart</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .bar {
+            fill: steelblue;
+        }
+
+        .bar:hover {
+            fill: orange;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>GDP per Capita by Country</h1>
+    <div id="chart"></div>
+
+    <script>
+        const margin = {
+            top: 20,
+            right: 30,
+            bottom: 30,
+            left: 110
+        };
+
+        const width = 1100;
+        const height = 3200;
+        const innerWidth = width - margin.left - margin.right;
+        const innerHeight = height - margin.top - margin.bottom;
+
+        const svg = d3.select("#chart")
+            .append("svg")
+            .attr("width", "100%")
+            .attr("viewBox", `0 0 ${width} ${height}`);
+
+        const chart = svg.append("g")
+            .attr("transform",
+                `translate(${margin.left},${margin.top})`);
+
+        d3.csv("gapminder.csv", d3.autoType)
+            .then(function(data) {
+                console.log("Rows loaded:", data.length);
+
+                const xScale = d3.scaleLinear()
+                    .domain([0, d3.max(data, d => d.gdpPercap)])
+                    .range([0, innerWidth]);
+
+                const yScale = d3.scaleBand()
+                    .domain(data.map(d => d.country))
+                    .range([0, innerHeight])
+                    .padding(0.1);
+
+                chart.selectAll("rect")
+                    .data(data)
+                    .enter()
+                    .append("rect")
+                    .attr("class", "bar")
+                    .attr("x", 0)
+                    .attr("y", d => yScale(d.country))
+                    .attr("width", d => xScale(d.gdpPercap))
+                    .attr("height", yScale.bandwidth());
+
+                chart.append("g")
+                    .call(d3.axisLeft(yScale));
+
+                chart.append("g")
+                    .attr("transform",
+                        `translate(0,${innerHeight})`)
+                    .call(d3.axisBottom(xScale));
+
+                console.log("Rectangles drawn:",
+                    chart.selectAll("rect").size());
+            })
+            .catch(function(error) {
+                console.error("Error:", error);
+                d3.select("#chart")
+                    .append("p")
+                    .style("color", "red")
+                    .text("Error: " + error.message);
+            });
+    </script>
+
+</body>
+</html>
+
+
+<!--i expected 142 rects since there were that many countries but since every country has multiple rows there were around 1700 rects-->
+
+<!--Initially, each bar is approximately 3.5 pixels tall because the chart height is 600 units and there are 1,704 rows. The country names are crowded and difficult to read.-->
+
+<!--Increasing the chart height to 3,200 units makes the bars easier to distinguish, but the chart becomes very long. I would filter the dataset to display only one year and sort the countries by GDP per capita-->
+
+<!--After filtering the data to 2007, sorting GDP per capita in descending order, and selecting the first 10 countries, Norway should appear in the chart. If it does not, the year filter, sorting operation, or top-10 selection may be missing or incorrect-->

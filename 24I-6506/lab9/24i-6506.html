@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lab 09 — Hierarchical, Network & Geospatial Visualizations</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3"></script>
+<style>
+:root{font-family:"Times New Roman",sans-serif;color:#df4bcd;background:#f4f6fa}body{margin:0}header{background:#f05bdf;color:white;padding:22px 5vw}header h1{margin:0 0 8px}header p{margin:0;color:#dbeafe}.wrap{max-width:1250px;margin:22px auto;padding:0 18px}.tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}.tabs button{border:0;border-radius:7px;padding:11px 14px;background:#dbe4f0;cursor:pointer;font-weight:bold}.tabs button.active{background:#1d4ed8;color:white}.panel{display:none;background:white;border-radius:12px;padding:20px;box-shadow:0 2px 12px #0000000c}.panel.active{display:block}.panel h2{margin-top:0}.note{background:#eff6ff;border-left:4px solid #2563eb;padding:10px 13px;border-radius:4px}.chart{width:100%;overflow:auto;border:1px solid #e5e7eb;border-radius:8px;min-height:420px;margin-top:14px}.chart svg{display:block;max-width:100%;height:auto}.tooltip{position:fixed;pointer-events:none;background:#111827;color:white;padding:9px 11px;border-radius:6px;font-size:13px;opacity:0;z-index:5;line-height:1.5}.legend{display:flex;gap:14px;flex-wrap:wrap;margin:12px 0;font-size:13px}.legend span{display:inline-flex;align-items:center;gap:5px}.swatch{width:12px;height:12px;display:inline-block;border-radius:2px}.source{font-size:12px;color:#64748b}.node-label{font-size:12px}.axis-label{font-size:12px;fill:#334155}.map-country{stroke:white;stroke-width:.5}.city{stroke:#fff;stroke-width:1.5}.link{stroke:#64748b;stroke-opacity:.65}.small{font-size:12px;color:#475569}.actions{display:flex;gap:10px;flex-wrap:wrap}.actions button{padding:8px 12px;border:1px solid #cbd5e1;background:#fff;border-radius:6px;cursor:pointer}footer{padding:20px;text-align:center;color:#64748b;font-size:12px}
+</style>
+</head>
+<body>
+<header><h1>Lab 09</h1></header>
+<div class="wrap">
+<div class="tabs">
+<button class="active" data-tab="t1">Treemap</button><button data-tab="t2">Dendrogram</button><button data-tab="t3">Flight Network</button><button data-tab="t4">Population Map</button><button data-tab="t5">Pakistan Cities</button><button data-tab="t6">Combined Map</button>
+</div>
+<section id="t1" class="panel active"><h2>Course Enrollment Treemap</h2><div id="legend1" class="legend"></div><div id="treemap" class="chart"></div></section>
+<section id="t2" class="panel"><h2>University Structure Dendrogram</h2><div id="dendrogram" class="chart"></div></section>
+<section id="t3" class="panel"><h2>Flight Route Network</h2><div id="network" class="chart"></div></section>
+<section id="t4" class="panel"><h2>World Population Choropleth</h2><div id="legend4" class="legend"></div><div id="worldmap" class="chart"></div><p class="source">Population figures are illustrative example values for the lab, not a current official statistical dataset. Join key: numeric country code.</p></section>
+<section id="t5" class="panel"><h2>Pakistan Cities Point Map</h2><div id="pakmap" class="chart"></div></section>
+<section id="t6" class="panel"><h2>Combined Spatial Encoding Map</h2><div id="legend6" class="legend"></div><div id="combined" class="chart"></div></section>
+<div class="tooltip" id="tip"></div>
+<script>
+const universityRows=[
+{department:"Computing",course:"Data Structures",students:180},{department:"Computing",course:"Algorithms",students:165},{department:"Computing",course:"Database Systems",students:150},{department:"Computing",course:"Artificial Intelligence",students:140},{department:"Computing",course:"Operating Systems",students:135},
+{department:"Business",course:"Principles of Management",students:120},{department:"Business",course:"Marketing",students:110},{department:"Business",course:"Accounting",students:105},{department:"Business",course:"Finance",students:95},
+{department:"Engineering",course:"Circuit Analysis",students:130},{department:"Engineering",course:"Digital Logic Design",students:115},{department:"Engineering",course:"Signals and Systems",students:100},{department:"Engineering",course:"Control Systems",students:90},
+{department:"Sciences",course:"Calculus",students:170},{department:"Sciences",course:"Physics",students:145},{department:"Sciences",course:"Statistics",students:125},{department:"Sciences",course:"Chemistry",students:85}];
+const flights=[
+{source:"Islamabad",target:"Lahore",flights:42},{source:"Islamabad",target:"Karachi",flights:35},{source:"Islamabad",target:"Peshawar",flights:18},{source:"Islamabad",target:"Quetta",flights:12},
+{source:"Lahore",target:"Karachi",flights:38},{source:"Lahore",target:"Faisalabad",flights:14},{source:"Lahore",target:"Multan",flights:16},{source:"Karachi",target:"Quetta",flights:10},
+{source:"Karachi",target:"Multan",flights:13},{source:"Karachi",target:"Peshawar",flights:8},{source:"Peshawar",target:"Faisalabad",flights:6},{source:"Quetta",target:"Multan",flights:5},
+{source:"Islamabad",target:"Faisalabad",flights:9},{source:"Lahore",target:"Peshawar",flights:11},{source:"Karachi",target:"Islamabad",flights:22}];
+const cities=[
+{name:"Islamabad",lat:33.6844,lon:73.0479,pop:1200000},{name:"Lahore",lat:31.5204,lon:74.3587,pop:13000000},{name:"Karachi",lat:24.8607,lon:67.0011,pop:16000000},
+{name:"Peshawar",lat:34.0151,lon:71.5249,pop:2200000},{name:"Quetta",lat:30.1798,lon:66.9750,pop:1000000},{name:"Faisalabad",lat:31.4504,lon:73.1350,pop:3200000},
+{name:"Multan",lat:30.1575,lon:71.5249,pop:2000000},{name:"Sialkot",lat:32.4945,lon:74.5229,pop:900000},{name:"Hyderabad",lat:25.3960,lon:68.3578,pop:1800000},{name:"Gwadar",lat:25.1264,lon:62.3225,pop:90000}];
+const population=[
+{id:840,country:"United States",population_millions:334.9},{id:156,country:"China",population_millions:1410.7},{id:356,country:"India",population_millions:1428.6},{id:586,country:"Pakistan",population_millions:240.5},{id:50,country:"Bangladesh",population_millions:172.9},{id:4,country:"Afghanistan",population_millions:42.2},{id:364,country:"Iran",population_millions:89.2},{id:643,country:"Russia",population_millions:144.2},{id:276,country:"Germany",population_millions:84.5},{id:250,country:"France",population_millions:68},{id:826,country:"United Kingdom",population_millions:68.3},{id:392,country:"Japan",population_millions:124.5},{id:76,country:"Brazil",population_millions:216.4},{id:566,country:"Nigeria",population_millions:223.8},{id:360,country:"Indonesia",population_millions:277.5},{id:124,country:"Canada",population_millions:40.1},{id:36,country:"Australia",population_millions:26.6},{id:710,country:"South Africa",population_millions:60.4},{id:484,country:"Mexico",population_millions:129.7},{id:818,country:"Egypt",population_millions:112.7},{id:404,country:"Kenya",population_millions:55.1},{id:724,country:"Spain",population_millions:48.6},{id:380,country:"Italy",population_millions:58.9},{id:682,country:"Saudi Arabia",population_millions:36.9}];
+const deptColors=d3.scaleOrdinal().domain(["Computing","Business","Engineering","Sciences"]).range(["#2563eb","#f59e0b","#10b981","#a855f7"]);
+const tip=d3.select("#tip");
+function tooltip(sel,htmlFn){sel.on("mousemove",function(e,d){tip.style("opacity",1).html(htmlFn(d)).style("left",(e.clientX+12)+"px").style("top",(e.clientY+12)+"px")}).on("mouseleave",()=>tip.style("opacity",0))}
+function hierarchyData(){return {name:"University",children:Array.from(d3.group(universityRows,d=>d.department),([department,rows])=>({name:department,children:rows.map(r=>({name:r.course,value:r.students,department:r.department,students:r.students}))}))}}
+function renderTreemap(){
+const W=1100,H=570; const root=d3.hierarchy(hierarchyData()).sum(d=>d.value||0).sort((a,b)=>b.value-a.value);
+d3.treemap().size([W,H]).paddingOuter(5).paddingTop(25).paddingInner(3)(root);
+const svg=d3.select("#treemap").html("").append("svg").attr("viewBox",`0 0 ${W} ${H}`).attr("width",W).attr("height",H);
+svg.selectAll("g.dept").data(root.children).join("g").attr("class","dept").each(function(d){const g=d3.select(this);g.append("rect").attr("x",d.x0).attr("y",d.y0).attr("width",d.x1-d.x0).attr("height",d.y1-d.y0).attr("fill",deptColors(d.data.name)).attr("fill-opacity",.17).attr("stroke",deptColors(d.data.name)).attr("stroke-width",2);g.append("text").attr("x",d.x0+7).attr("y",d.y0+17).attr("font-weight","bold").attr("fill",deptColors(d.data.name)).text(d.data.name)});
+const leaves=root.leaves();const cells=svg.selectAll("g.course").data(leaves).join("g").attr("class","course");
+cells.append("rect").attr("x",d=>d.x0).attr("y",d=>d.y0).attr("width",d=>Math.max(0,d.x1-d.x0)).attr("height",d=>Math.max(0,d.y1-d.y0)).attr("fill",d=>deptColors(d.data.department)).attr("fill-opacity",.83).attr("stroke","white");
+cells.append("text").attr("x",d=>d.x0+6).attr("y",d=>d.y0+18).attr("fill","white").attr("font-size",12).text(d=>d.data.name).each(function(d){const max=Math.floor((d.x1-d.x0-12)/7);if(max<8)this.remove();else if(d.data.name.length>max)d3.select(this).text(d.data.name.slice(0,max-1)+"…")});
+tooltip(cells, d=>`<b>${d.data.name}</b><br>Department: ${d.data.department}<br>Students: ${d.data.students}`);
+d3.select("#legend1").html(["Computing","Business","Engineering","Sciences"].map(x=>`<span><i class="swatch" style="background:${deptColors(x)}"></i>${x}</span>`).join(""));
+}
+
+const collapsedDepartments = new Set();
+
+function renderTree() {
+    const W = 1100;
+    const margin = {
+        top: 40,
+        right: 280,
+        bottom: 40,
+        left: 130
+    };
+
+    const rowGap = 42;
+    const depthGap = 300;
+
+    const svg = d3.select("#dendrogram")
+        .html("")
+        .append("svg")
+        .attr("width", W)
+        .attr("height", 500)
+        .attr("viewBox", `0 0 ${W} 500`)
+        .style("display", "block");
+
+    // Build the hierarchy
+    const root = d3.hierarchy(hierarchyData());
+
+    // Collapse departments selected by the user
+    root.children.forEach(d => {
+        if (collapsedDepartments.has(d.data.name)) {
+            d._children = d.children;
+            d.children = null;
+        }
+    });
+
+    // Get only the currently visible nodes
+    const visibleNodes = root.descendants();
+    const visibleLinks = root.links();
+
+    // Calculate the required height based on visible nodes
+    const H = margin.top
+        + (visibleNodes.length - 1) * rowGap
+        + margin.bottom;
+
+    svg.attr("height", H)
+        .attr("viewBox", `0 0 ${W} ${H}`);
+
+    // Assign a unique vertical position to every visible node
+    visibleNodes.forEach((d, i) => {
+        d.x = margin.top + i * rowGap;
+        d.y = margin.left + d.depth * depthGap;
+    });
+
+    const colors = ["#1d4ed8", "#059669", "#d97706"];
+
+    // Draw connecting lines
+    svg.append("g")
+        .selectAll("path")
+        .data(visibleLinks)
+        .join("path")
+        .attr("fill", "none")
+        .attr("stroke", "#94a3b8")
+        .attr("stroke-width", 1.4)
+        .attr("d", d3.linkHorizontal()
+            .x(d => d.y)
+            .y(d => d.x));
+
+    // Draw nodes
+    const nodes = svg.append("g")
+        .selectAll("g")
+        .data(visibleNodes)
+        .join("g")
+        .attr("transform", d => `translate(${d.y},${d.x})`)
+        .style("cursor", d => d.depth === 1 ? "pointer" : "default")
+        .on("click", (event, d) => {
+            // Only department nodes can be collapsed or expanded
+            if (d.depth !== 1) return;
+
+            if (d.children) {
+                collapsedDepartments.add(d.data.name);
+            } else if (d._children) {
+                collapsedDepartments.delete(d.data.name);
+            }
+
+            renderTree();
+        });
+
+    // Draw circles
+    nodes.append("circle")
+        .attr("r", d => d.depth === 0 ? 7 : 5)
+        .attr("fill", d => colors[d.depth]);
+
+    // Add labels
+    nodes.append("text")
+        .attr("dy", ".32em")
+        .attr("x", d =>
+            d.depth === 0 || d.depth === 1 ? -12 : 10
+        )
+        .attr("text-anchor", d =>
+            d.depth === 0 || d.depth === 1 ? "end" : "start"
+        )
+        .attr("font-size", d => d.depth === 2 ? 11 : 13)
+        .text(d => d.data.name);
+}
+function makeNetwork(target,combinedMode=false){
+const W=1100,H=620,svg=d3.select(target).html("").append("svg").attr("viewBox",`0 0 ${W} ${H}`).attr("width",W).attr("height",H);
+const nodes=[...new Set(flights.flatMap(d=>[d.source,d.target]))].map(name=>({id:name,degree:flights.filter(e=>e.source===name||e.target===name).length,...(cities.find(c=>c.name===name)||{pop:500000,lat:30,lon:70})}));
+const links=flights.map(d=>({...d}));
+const width=d3.scaleLinear().domain(d3.extent(flights,d=>d.flights)).range([1,7]);
+const radius=d3.scaleSqrt().domain(d3.extent(nodes,d=>d.degree)).range([6,18]);
+const link=svg.append("g").selectAll("line").data(links).join("line").attr("class","link").attr("stroke-width",d=>width(d.flights));
+const node=svg.append("g").selectAll("circle").data(nodes).join("circle").attr("r",d=>radius(d.degree)).attr("fill","#2563eb").attr("stroke","white").attr("stroke-width",1.5).call(d3.drag().on("start",(e,d)=>{if(!e.active)sim.alphaTarget(.3).restart();d.fx=d.x;d.fy=d.y}).on("drag",(e,d)=>{d.fx=e.x;d.fy=e.y}).on("end",(e,d)=>{if(!e.active)sim.alphaTarget(0);d.fx=null;d.fy=null}));
+const labels=svg.append("g").selectAll("text").data(nodes).join("text").attr("font-size",12).attr("dx",10).attr("dy",4).text(d=>d.id).style("pointer-events","none");
+node.on("mouseenter",(e,d)=>{const connected=new Set(links.filter(l=>l.source.id===d.id||l.target.id===d.id));link.attr("stroke-opacity",l=>connected.has(l)?.95:.06).attr("stroke",l=>connected.has(l)?"#dc2626":"#94a3b8");node.attr("opacity",n=>n.id===d.id||links.some(l=>(l.source.id===d.id&&l.target.id===n.id)||(l.target.id===d.id&&l.source.id===n.id))?1:.18);labels.attr("opacity",n=>n.id===d.id?1:.25)}).on("mouseleave",()=>{link.attr("stroke-opacity",.65).attr("stroke","#64748b");node.attr("opacity",1);labels.attr("opacity",1)});
+tooltip(node,d=>`<b>${d.id}</b><br>Routes (degree): ${d.degree}<br>Population: ${d.pop.toLocaleString()}`);
+const sim=d3.forceSimulation(nodes).force("link",d3.forceLink(links).id(d=>d.id).distance(110)).force("charge",d3.forceManyBody().strength(-260)).force("center",d3.forceCenter(W/2,H/2)).force("collide",d3.forceCollide(d=>radius(d.degree)+5)).on("tick",()=>{link.attr("x1",d=>d.source.x).attr("y1",d=>d.source.y).attr("x2",d=>d.target.x).attr("y2",d=>d.target.y);node.attr("cx",d=>d.x).attr("cy",d=>d.y);labels.attr("x",d=>d.x).attr("y",d=>d.y)});
+}
+async function loadWorld(){
+const el=d3.select("#worldmap").html("");
+try{
+const world=await d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json");
+const features=topojson.feature(world,world.objects.countries).features;
+const data=new Map(population.map(d=>[+d.id,d]));
+const W=1100,H=600,svg=el.append("svg").attr("viewBox",`0 0 ${W} ${H}`).attr("width",W).attr("height",H);
+const projection=d3.geoNaturalEarth1().fitSize([W-20,H-20],{type:"FeatureCollection",features});
+const path=d3.geoPath(projection);const color=d3.scaleSequentialSqrt(d3.interpolateYlOrRd).domain([0,d3.max(population,d=>d.population_millions)]);
+const countries=svg.selectAll("path").data(features).join("path").attr("class","map-country").attr("d",path).attr("fill",d=>data.has(+d.id)?color(data.get(+d.id).population_millions):"#e5e7eb");
+tooltip(countries,d=>{const p=data.get(+d.id);return `<b>${p?p.country:(d.properties.name||"Country")}</b><br>Population: ${p?p.population_millions+" million":"No data"}`});
+countries.on("mouseenter",function(){d3.select(this).attr("stroke","#111827").attr("stroke-width",1.8)}).on("mouseleave",function(){d3.select(this).attr("stroke","white").attr("stroke-width",.5)});
+d3.select("#legend4").html(`<span>Population (millions):</span><span>0</span><span style="display:inline-block;width:220px;height:12px;background:linear-gradient(90deg,${[0,.25,.5,.75,1].map(v=>color(v*d3.max(population,d=>d.population_millions))).join(",")})"></span><span>${d3.max(population,d=>d.population_millions).toLocaleString()}</span><span>Gray = no data</span>`);
+}catch(e){el.html("<p style='padding:20px;color:#b91c1c'>World map could not load</p>");console.error(e)}
+}
+function renderPakistanMap(target,combinedMode=false){
+const W=1100,H=620,svg=d3.select(target).html("").append("svg").attr("viewBox",`0 0 ${W} ${H}`).attr("width",W).attr("height",H);
+const projection=d3.geoMercator().center([69.5,29.5]).scale(2600).translate([W/2,H/2]);
+const r=d3.scaleSqrt().domain([0,d3.max(cities,d=>d.pop)]).range([3,25]);
+const coord=new Map(cities.map(c=>[c.name,projection([c.lon,c.lat])]));
+if(combinedMode){
+const deg=new Map(cities.map(c=>[c.name,flights.filter(f=>f.source===c.name||f.target===c.name).length]));
+const width=d3.scaleLinear().domain(d3.extent(flights,d=>d.flights)).range([1,7]);
+svg.append("g").selectAll("line").data(flights).join("line").attr("x1",d=>coord.get(d.source)[0]).attr("y1",d=>coord.get(d.source)[1]).attr("x2",d=>coord.get(d.target)[0]).attr("y2",d=>coord.get(d.target)[1]).attr("stroke","#64748b").attr("stroke-opacity",.65).attr("stroke-width",d=>width(d.flights)).attr("class","route");
+const circles=svg.append("g").selectAll("circle").data(cities).join("circle").attr("cx",d=>coord.get(d.name)[0]).attr("cy",d=>coord.get(d.name)[1]).attr("r",d=>r(d.pop)).attr("fill",d=>deg.get(d.name)>=4?"#dc2626":"#2563eb").attr("fill-opacity",.7).attr("class","city");
+svg.append("g").selectAll("text").data(cities).join("text").attr("x",d=>coord.get(d.name)[0]+7).attr("y",d=>coord.get(d.name)[1]-7).attr("font-size",12).text(d=>d.name);
+circles.on("mouseenter",function(e,d){const connected=flights.filter(f=>f.source===d.name||f.target===d.name);svg.selectAll(".route").attr("stroke-opacity",l=>connected.includes(l)?1:.05).attr("stroke",l=>connected.includes(l)?"#dc2626":"#64748b");circles.attr("opacity",c=>c.name===d.name||connected.some(l=>l.source===c.name||l.target===c.name)?1:.18)}).on("mouseleave",()=>{svg.selectAll(".route").attr("stroke-opacity",.65).attr("stroke","#64748b");circles.attr("opacity",1)});
+tooltip(circles,d=>`<b>${d.name}</b><br>Population: ${d.pop.toLocaleString()}<br>Routes: ${deg.get(d.name)}<br>Hub: ${deg.get(d.name)>=4?"Yes":"No"}`);
+d3.select("#legend6").html(`<span>Position = location</span><span>Circle area = population</span><span><i class="swatch" style="background:#dc2626"></i>Hub (4+ routes)</span><span><i class="swatch" style="background:#2563eb"></i>Not a hub</span><span>Line width = weekly flights</span>`);
+}else{
+const circles=svg.selectAll("circle").data(cities).join("circle").attr("cx",d=>coord.get(d.name)[0]).attr("cy",d=>coord.get(d.name)[1]).attr("r",d=>r(d.pop)).attr("fill","#0d9488").attr("fill-opacity",.55).attr("stroke","#0f766e").attr("class","city");
+svg.selectAll("text").data(cities.filter(d=>d.pop>1000000)).join("text").attr("x",d=>coord.get(d.name)[0]+7).attr("y",d=>coord.get(d.name)[1]-7).attr("font-size",12).text(d=>d.name);
+tooltip(circles,d=>`<b>${d.name}</b><br>Population: ${d.pop.toLocaleString()}<br>Coordinates: ${d.lat}, ${d.lon}`);
+}
+}
+d3.selectAll(".tabs button").on("click",function(){d3.selectAll(".tabs button").classed("active",false);d3.select(this).classed("active",true);d3.selectAll(".panel").classed("active",false);d3.select("#"+this.dataset.tab).classed("active",true);if(this.dataset.tab==="t4")loadWorld()});
+renderTreemap();renderTree();makeNetwork("#network");renderPakistanMap("#pakmap");renderPakistanMap("#combined",true);
+</script>
+</body></html>

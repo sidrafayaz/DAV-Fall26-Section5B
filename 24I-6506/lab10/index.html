@@ -1,0 +1,1692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Air Quality Analytics 2025 | City Environment Office</title>
+  
+  <!-- D3.js v7 CDN with Local Fallback -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script>
+    if (!window.d3) {
+      document.write('<script src="d3.v7.min.js"><\/script>');
+    }
+  </script>
+
+  <!-- Embedded Styles (Single HTML file requirement) -->
+  <style>
+/* ==========================================================================
+   City Environment Office - Air Quality Analytics Dashboard (DVA Lab 10)
+   Modern, Professional, Clean Data Visualization Stylesheet
+   ========================================================================== */
+
+:root {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-card: #ffffff;
+  --bg-card-subtle: #f8fafc;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --text-light: #94a3b8;
+  --border-color: #e2e8f0;
+  --border-subtle: #cbd5e1;
+  
+  /* Air Quality Colors */
+  --pm-low: #10b981;       /* Good / Low <= 35 */
+  --pm-moderate: #f59e0b;  /* Moderate 36 - 75 */
+  --pm-high: #f97316;      /* High 76 - 150 */
+  --pm-severe: #dc2626;    /* Severe > 150 */
+  --pm-offline: #94a3b8;   /* Missing / Sensor offline */
+  
+  /* Brand & Accents */
+  --primary-blue: #2563eb;
+  --primary-dark: #1e40af;
+  --city-color: #dc2626;
+  --suburb-color: #0284c7;
+  --who-target: #ea580c;
+  --who-guideline: #059669;
+  
+  /* Shadows & Radius */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background-color: #f1f5f9;
+  color: var(--text-main);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ================= Top Banner & Header ================= */
+.executive-header {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #1e3a8a 100%);
+  color: #ffffff;
+  padding: 2.5rem 2rem 2rem;
+  box-shadow: var(--shadow-lg);
+  border-bottom: 3px solid #3b82f6;
+}
+
+.header-container {
+  max-width: 1300px;
+  margin: 0 auto;
+}
+
+.institution-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.12);
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  font-size: 0.825rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.main-title {
+  font-size: 2.3rem;
+  font-weight: 800;
+  line-height: 1.2;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  font-size: 1.1rem;
+  color: #cbd5e1;
+  max-width: 850px;
+  margin-bottom: 1.5rem;
+}
+
+.meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+}
+
+.meta-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.meta-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #94a3b8;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.meta-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #f8fafc;
+}
+
+.editable-meta {
+  color: #38bdf8;
+  border-bottom: 1px dashed #38bdf8;
+  outline: none;
+}
+
+/* ================= Sticky Navigation Bar ================= */
+.nav-bar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  padding: 0.5rem 1rem;
+}
+
+.nav-container {
+  max-width: 1300px;
+  margin: 0 auto;
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  white-space: nowrap;
+  padding-bottom: 0.25rem;
+}
+
+.nav-pill {
+  display: inline-block;
+  padding: 0.4rem 0.85rem;
+  border-radius: 9999px;
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-decoration: none;
+  background: transparent;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.nav-pill:hover {
+  background: #f1f5f9;
+  color: var(--primary-blue);
+  border-color: var(--border-color);
+}
+
+.nav-pill.active {
+  background: var(--primary-blue);
+  color: #ffffff;
+}
+
+.nav-pill.highlight {
+  background: #fef2f2;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.nav-pill.highlight:hover {
+  background: #fee2e2;
+}
+
+/* ================= Main Content Container ================= */
+.main-wrapper {
+  max-width: 1300px;
+  margin: 2rem auto;
+  padding: 0 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+/* ================= KPI Summary Cards ================= */
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 1.25rem;
+}
+
+.kpi-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.kpi-title {
+  font-size: 0.825rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  margin-bottom: 0.35rem;
+}
+
+.kpi-value {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: 0.35rem;
+}
+
+.kpi-sub {
+  font-size: 0.825rem;
+  color: var(--text-muted);
+}
+
+.kpi-card.alert-danger {
+  border-left: 4px solid var(--pm-severe);
+}
+.kpi-card.alert-danger .kpi-value {
+  color: var(--pm-severe);
+}
+
+.kpi-card.alert-warning {
+  border-left: 4px solid var(--pm-moderate);
+}
+.kpi-card.alert-warning .kpi-value {
+  color: #d97706;
+}
+
+.kpi-card.alert-info {
+  border-left: 4px solid var(--primary-blue);
+}
+.kpi-card.alert-info .kpi-value {
+  color: var(--primary-blue);
+}
+
+.kpi-card.alert-offline {
+  border-left: 4px solid #64748b;
+}
+.kpi-card.alert-offline .kpi-value {
+  color: #475569;
+}
+
+/* ================= Chart Section Card ================= */
+.chart-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  padding: 1.75rem;
+  transition: box-shadow 0.2s ease;
+}
+
+.chart-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.card-header-flex {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.task-badge-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.task-tag {
+  background: #e0e7ff;
+  color: #3730a3;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-sm);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.task-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--text-main);
+  line-height: 1.3;
+}
+
+.task-question {
+  width: 100%;
+  font-size: 0.95rem;
+  color: #475569;
+  font-style: italic;
+  margin-top: 0.25rem;
+}
+
+.header-badges {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.stat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.stat-chip.danger {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.stat-chip.warning {
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.stat-chip.success {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.stat-chip.neutral {
+  background: #f8fafc;
+  color: #475569;
+  border: 1px solid var(--border-color);
+}
+
+/* ================= SVG Chart Container ================= */
+.svg-container {
+  width: 100%;
+  position: relative;
+  overflow: visible;
+}
+
+svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.axis-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  fill: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.tick text {
+  font-size: 0.75rem;
+  fill: #64748b;
+  font-family: inherit;
+}
+
+.tick line {
+  stroke: #e2e8f0;
+}
+
+.grid-line line {
+  stroke: #f1f5f9;
+  stroke-dasharray: 2, 2;
+}
+
+/* Reference lines */
+.ref-line {
+  stroke-dasharray: 5, 4;
+  stroke-width: 1.5;
+}
+.ref-line.guideline {
+  stroke: var(--who-guideline);
+}
+.ref-line.target {
+  stroke: var(--who-target);
+}
+.ref-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  alignment-baseline: middle;
+}
+
+/* ================= Insights / Findings Box ================= */
+.insight-box {
+  background: var(--bg-card-subtle);
+  border: 1px solid var(--border-color);
+  border-left: 4px solid var(--primary-blue);
+  border-radius: var(--radius-sm);
+  padding: 1rem 1.25rem;
+  margin-top: 1.25rem;
+  font-size: 0.9rem;
+  color: #334155;
+}
+
+.insight-box h4 {
+  font-size: 0.925rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 0.4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.insight-box ul {
+  padding-left: 1.25rem;
+  margin-top: 0.35rem;
+}
+
+.insight-box li {
+  margin-bottom: 0.25rem;
+}
+
+/* ================= Custom Tooltip ================= */
+#d3-tooltip {
+  position: absolute;
+  pointer-events: none;
+  opacity: 0;
+  background: rgba(15, 23, 42, 0.95);
+  color: #ffffff;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  line-height: 1.4;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  transition: opacity 0.15s ease-out;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  max-width: 280px;
+}
+
+#d3-tooltip .tt-date {
+  font-weight: 700;
+  color: #93c5fd;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  padding-bottom: 0.25rem;
+  margin-bottom: 0.35rem;
+  font-size: 0.85rem;
+}
+
+#d3-tooltip .tt-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0.2rem 0;
+}
+
+#d3-tooltip .tt-label {
+  color: #cbd5e1;
+}
+
+#d3-tooltip .tt-val {
+  font-weight: 700;
+  color: #ffffff;
+}
+
+#d3-tooltip .tt-badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  margin-top: 0.35rem;
+}
+
+/* ================= Controls & Buttons ================= */
+.btn-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: #ffffff;
+  color: var(--text-main);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.btn.primary {
+  background: var(--primary-blue);
+  color: #ffffff;
+  border-color: var(--primary-dark);
+}
+
+.btn.primary:hover {
+  background: var(--primary-dark);
+}
+
+/* ================= Legend Styling ================= */
+.custom-legend {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  font-size: 0.825rem;
+  font-weight: 500;
+  margin-top: 0.5rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+}
+
+.legend-color-box {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+}
+
+.legend-line {
+  width: 20px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+/* ================= Task 1 Timeline Card ================= */
+.audit-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  margin: 1rem 0;
+}
+
+.audit-table th, .audit-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.audit-table th {
+  background: #f8fafc;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+}
+
+.audit-table tr:hover {
+  background: #f8fafc;
+}
+
+/* ================= Director Q&A Accordion ================= */
+.qa-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.qa-card {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1.25rem 1.5rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.qa-card:hover {
+  border-color: #3b82f6;
+  box-shadow: var(--shadow-sm);
+}
+
+.qa-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.qa-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.qa-chart-ref {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--primary-blue);
+  background: #eff6ff;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid #bfdbfe;
+  white-space: nowrap;
+}
+
+.qa-answer {
+  font-size: 0.925rem;
+  color: #334155;
+  line-height: 1.6;
+}
+
+.qa-highlight {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.recommendation-box {
+  background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
+  border: 2px solid #3b82f6;
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.recommendation-title {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #1e3a8a;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ================= Footer ================= */
+.footer {
+  background: var(--bg-primary);
+  color: #94a3b8;
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  font-size: 0.85rem;
+  border-top: 1px solid #334155;
+  margin-top: 4rem;
+}
+
+.footer-links {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 0.75rem;
+}
+
+.footer-links a {
+  color: #cbd5e1;
+  text-decoration: none;
+}
+
+.footer-links a:hover {
+  color: #38bdf8;
+  text-decoration: underline;
+}
+
+/* ================= Responsive Queries ================= */
+@media (max-width: 768px) {
+  .main-title {
+    font-size: 1.75rem;
+  }
+  .chart-card {
+    padding: 1.25rem;
+  }
+  .card-header-flex {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .kpi-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+  </style>
+</head>
+<body>
+
+  <!-- Shared Interactive Tooltip Container -->
+  <div id="d3-tooltip"></div>
+
+  <!-- Top Executive Header -->
+  <header class="executive-header">
+    <div class="header-container">
+      <div class="institution-tag">
+        <span>🏛️ FAST School of Computing • Data Analysis & Visualization (Lab 10)</span>
+      </div>
+      <h1 class="main-title">City Environment Office: Air Quality 2025</h1>
+      <p class="subtitle">
+        Annual PM2.5 Time Series Analytics, Sensor Diagnostics, and Strategic Briefing for the Smog Action Committee
+      </p>
+
+    </div>
+  </header>
+
+  <!-- Sticky Quick-Navigation Bar -->
+  <nav class="nav-bar">
+    <div class="nav-container">
+      <a href="#task1" class="nav-pill">Task 1: Data Audit</a>
+      <a href="#task2" class="nav-pill">Task 2: City Trend</a>
+      <a href="#task3" class="nav-pill">Task 3: Unhealthy Build-Up</a>
+      <a href="#task4" class="nav-pill">Task 4: Suburb vs City</a>
+      <a href="#task5" class="nav-pill">Task 5: Monthly Composition</a>
+      <a href="#task6" class="nav-pill">Task 6: Weekday Heatmap</a>
+      <a href="#task7" class="nav-pill">Task 7: Monthly Spread</a>
+      <a href="#task8" class="nav-pill">Task 8: De-noised & Sensor Gap</a>
+      <a href="#task9" class="nav-pill">Task 9: Interactive Zoom</a>
+      <a href="#director-briefing" class="nav-pill highlight">★ Director's Briefing (12 Q&A)</a>
+    </div>
+  </nav>
+
+  <!-- Main Content Wrapper -->
+  <main class="main-wrapper">
+
+    <!-- Executive KPI Row -->
+    <section class="kpi-row">
+      <div class="kpi-card alert-info">
+        <span class="kpi-title">Dataset Coverage</span>
+        <span class="kpi-value" id="kpi-rows">356</span>
+        <span class="kpi-sub">356 of 365 days recorded in 2025</span>
+      </div>
+      <div class="kpi-card alert-danger">
+        <span class="kpi-title">Sensor Offline Outage</span>
+        <span class="kpi-value" id="kpi-missing">9 Days</span>
+        <span class="kpi-sub">March 12 – March 20 (Unmonitored)</span>
+      </div>
+      <div class="kpi-card alert-warning">
+        <span class="kpi-title">WHO Guideline Exceedance</span>
+        <span class="kpi-value" id="kpi-above15">355 (99.7%)</span>
+        <span class="kpi-sub">Days exceeding 15 µg/m³ threshold</span>
+      </div>
+      <div class="kpi-card alert-danger">
+        <span class="kpi-title">Unhealthy Smog Days</span>
+        <span class="kpi-value" id="kpi-above75">188 (52.8%)</span>
+        <span class="kpi-sub">Days exceeding WHO Target 1 (75 µg/m³)</span>
+      </div>
+    </section>
+
+    <!-- TASK 1: Dataset Audit & Health Check -->
+    <section id="task1" class="chart-card">
+      <div class="card-header-flex">
+        <div>
+          <div class="task-badge-title">
+            <span class="task-tag">Task 1</span>
+            <h2 class="task-title">Dataset Audit & Calendar Continuity Check</h2>
+          </div>
+          <p class="task-question">Question: Count the rows, find the first and last dates, and compare with the number of days in 2025.</p>
+        </div>
+        <div class="header-badges">
+          <span class="stat-chip neutral">Total Days in 2025: 365</span>
+          <span class="stat-chip danger">Missing: 9 Days (2.5%)</span>
+          <span class="stat-chip success">Recorded: 356 Days (97.5%)</span>
+        </div>
+      </div>
+
+      <!-- Timeline strip chart -->
+      <div id="chart-task1" class="svg-container"></div>
+
+      <table class="audit-table">
+        <thead>
+          <tr>
+            <th>Audit Metric</th>
+            <th>Observed Value</th>
+            <th>Expected Reference</th>
+            <th>Data Quality Assessment</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>First Recorded Date</strong></td>
+            <td>2025-01-01</td>
+            <td>2025-01-01</td>
+            <td><span class="stat-chip success">Nominal Start</span></td>
+          </tr>
+          <tr>
+            <td><strong>Last Recorded Date</strong></td>
+            <td>2025-12-31</td>
+            <td>2025-12-31</td>
+            <td><span class="stat-chip success">Nominal End</span></td>
+          </tr>
+          <tr>
+            <td><strong>Row Count vs Calendar Days</strong></td>
+            <td>356 Rows</td>
+            <td>365 Days (Non-leap year)</td>
+            <td><span class="stat-chip danger">Deficit of 9 Days</span></td>
+          </tr>
+          <tr>
+            <td><strong>Sensor Outage Window</strong></td>
+            <td>2025-03-12 to 2025-03-20</td>
+            <td>Continuous Telemetry</td>
+            <td><span class="stat-chip danger">Critical 9-day Data Hole in March</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="insight-box">
+        <h4>🔍 Key Analytical Finding</h4>
+        <p>
+          Unlike categorical tables where row sequence can be rearranged without penalty, time-series order <em>is</em> the information. 
+          While the dataset nominally spans the full calendar year from Jan 1 to Dec 31, there is an acute 9-day telemetry blackout in late winter (March 12–20). 
+          Any naive visualization using categorical axes or unbroken lines would falsely conceal this hardware failure.
+        </p>
+      </div>
+    </section>
+
+    <!-- TASK 2: City Centre Annual PM2.5 Line Chart -->
+    <section id="task2" class="chart-card">
+      <div class="card-header-flex">
+        <div>
+          <div class="task-badge-title">
+            <span class="task-tag">Task 2</span>
+            <h2 class="task-title">City Centre PM2.5 Annual Time Series & Regulatory Thresholds</h2>
+          </div>
+          <p class="task-question">Question: How did PM2.5 in the city centre change through the year?</p>
+        </div>
+        <div class="header-badges">
+          <span class="stat-chip warning">Above 15 µg/m³: 355 Days (99.7%)</span>
+          <span class="stat-chip danger">Above 75 µg/m³: 188 Days (52.8%)</span>
+        </div>
+      </div>
+
+      <div class="custom-legend">
+        <div class="legend-item"><span class="legend-line" style="background: var(--city-color);"></span> City Centre Daily PM2.5</div>
+        <div class="legend-item"><span class="legend-line" style="border-bottom: 2px dashed var(--who-guideline); background: transparent;"></span> WHO 24-hr Guideline (15 µg/m³)</div>
+        <div class="legend-item"><span class="legend-line" style="border-bottom: 2px dashed var(--who-target); background: transparent;"></span> WHO Interim Target 1 (75 µg/m³)</div>
+      </div>
+
+      <div id="chart-task2" class="svg-container"></div>
+
+      <div class="insight-box">
+        <h4>📈 Trend & Spike Observations</h4>
+        <ul>
+          <li><strong>Regulatory Non-Compliance:</strong> Only <em>one single day</em> in 2025 (July 9, 11.8 µg/m³) met the WHO 24-hour clean air guideline. 99.7% of days exposed citizens to air above healthy limits.</li>
+          <li><strong>Over Half the Year Unhealthy:</strong> 188 days (52.8%) breached the WHO Interim Target 1 of 75 µg/m³, demanding immediate public smog advisories.</li>
+          <li><strong>Peak Anomaly #1:</strong> <strong>November 8 (320.0 µg/m³)</strong> represents the severe winter smog peak, driven by agricultural stubble burning, festive fireworks, and atmospheric inversion.</li>
+          <li><strong>Peak Anomaly #2:</strong> <strong>May 18 (245.0 µg/m³)</strong> represents a severe isolated spike during an otherwise clean pre-monsoon month, characteristic of a regional dust storm event.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- TASK 3: Cumulative Unhealthy Days Build-Up -->
+    <section id="task3" class="chart-card">
+      <div class="card-header-flex">
+        <div>
+          <div class="task-badge-title">
+            <span class="task-tag">Task 3</span>
+            <h2 class="task-title">Cumulative Build-Up of Unhealthy Smog Days (> 75 µg/m³)</h2>
+          </div>
+          <p class="task-question">Question: How quickly did unhealthy days (above 75 µg/m³) build up during the year?</p>
+        </div>
+        <div class="header-badges">
+          <span class="stat-chip danger">Year-End Total: 188 Days (Matches Task 2)</span>
+        </div>
+      </div>
+
+      <div id="chart-task3" class="svg-container"></div>
+
+      <div class="insight-box">
+        <h4>⏳ Progression Trajectory</h4>
+        <ul>
+          <li><strong>Rapid Q1 Accumulation:</strong> By April 30, the city had already accumulated 98 unhealthy days. Every single day in January (31) and February (28) was above 75 µg/m³.</li>
+          <li><strong>Summer Monsoon Plateau:</strong> From May 19 to August 31, the curve goes completely flat at exactly 100 days. Zero unhealthy days occurred during June, July, and August due to high winds and rain precipitation washouts.</li>
+          <li><strong>Autumn Smog Surge:</strong> Starting mid-September, the slope accelerates aggressively, adding 88 additional unhealthy days to finish at exactly 188 days by December 31.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- TASK 4: City vs. Suburb Dual Time Series -->
+    <section id="task4" class="chart-card">
+      <div class="card-header-flex">
+        <div>
+          <div class="task-badge-title">
+            <span class="task-tag">Task 4</span>
+            <h2 class="task-title">Spatial Disparity: City Centre vs. Suburb Telemetry</h2>
+          </div>
+          <p class="task-question">Question: Does the suburb behave like the city centre?</p>
+        </div>
+        <div class="header-badges">
+          <span class="stat-chip neutral">City Mean: 90.6 µg/m³</span>
+          <span class="stat-chip neutral">Suburb Mean: 71.3 µg/m³</span>
+          <span class="stat-chip danger">Urban Penalty: +19.3 µg/m³</span>
+        </div>
+      </div>
+
+      <div class="custom-legend">
+        <div class="legend-item"><span class="legend-line" style="background: var(--city-color);"></span> City Centre Station (Urban Core)</div>
+        <div class="legend-item"><span class="legend-line" style="background: var(--suburb-color);"></span> Suburb Station (Periphery)</div>
+        <div class="legend-item"><span class="legend-line" style="border-bottom: 2px dashed var(--who-target); background: transparent;"></span> WHO Target (75 µg/m³)</div>
+      </div>
+
+      <div id="chart-task4" class="svg-container"></div>
+
+      <div class="insight-box">
+        <h4>🏙️ Spatial Comparison Analysis</h4>
+        <ul>
+          <li><strong>Synchronous Regional Trajectory:</strong> The suburb follows the exact same seasonal macro-trend as the city centre, co-peaking during November (290 µg/m³ vs 320 µg/m³) and May (210 µg/m³ vs 245 µg/m³).</li>
+          <li><strong>Consistent Urban Penalty:</strong> City centre pollution is systematically higher by an average of 19.3 µg/m³. The divergence is widest during the winter months (Jan–Feb and Nov–Dec), where dense stop-and-go traffic and street-canyon traps intensify localized particulate concentration.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- TASK 5: Monthly Pollution Levels Stacked Bar Chart -->
+    <section id="task5" class="chart-card">
+      <div class="card-header-flex">
+        <div>
+          <div class="task-badge-title">
+            <span class="task-tag">Task 5</span>
+            <h2 class="task-title">Monthly Pollution Severity Composition (Stacked Composition)</h2>
+          </div>
+          <p class="task-question">Question: In each month, how are the days split between pollution levels?</p>
+        </div>
+        <div class="header-badges">
+          <span class="stat-chip success">Low: ≤ 35</span>
+          <span class="stat-chip warning">Moderate: 36–75</span>
+          <span class="stat-chip warning">High: 76–150</span>
+          <span class="stat-chip danger">Severe: > 150</span>
+        </div>
+      </div>
+
+      <div id="chart-task5" class="svg-container"></div>
+
+      <div class="insight-box">
+        <h4>📊 Composition Insights & Missing Days Explanation</h4>
+        <ul>
+          <li><strong>Severe Day Concentration:</strong> Severe days (>150 µg/m³) occur predominantly during cold winter months: December (11 days), January (9 days), February (8 days), November (5 days), and October (2 days). March and May recorded 1 severe day each.</li>
+          <li><strong>Cleanest Month:</strong> July dominates clean air with 28 Low days (90.3%), followed by June with 17 Low days and August with 12 Low days.</li>
+          <li><strong>Why Some Months are Shorter:</strong> February has 28 days naturally; April, June, September, and November have 30 days. Crucially, <strong>March is shorter at only 22 recorded days</strong> because the air quality monitoring station experienced a 9-day blackout (March 12–20).</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- TASK 6: Day-of-Week vs Month Heatmap -->
+    <section id="task6" class="chart-card">
+      <div class="card-header-flex">
+        <div>
+          <div class="task-badge-title">
+            <span class="task-tag">Task 6</span>
+            <h2 class="task-title">Temporal Matrix: Day-of-Week vs. Month Heatmap</h2>
+          </div>
+          <p class="task-question">Question: Is pollution tied to the day of the week, the month, or both?</p>
+        </div>
+        <div class="header-badges">
+          <span class="stat-chip neutral">Weekday Spread: ~9.8 µg/m³</span>
+          <span class="stat-chip danger">Monthly Spread: 114.8 µg/m³</span>
+        </div>
+      </div>
+
+      <div id="chart-task6" class="svg-container"></div>
+
+      <div class="insight-box">
+        <h4>🔥 Root Cause Implication</h4>
+        <p>
+          Examining the grid horizontally across rows reveals striking color changes from deep red in winter (120–160 µg/m³) to pale yellow in summer (20–40 µg/m³). 
+          However, examining the grid vertically across columns reveals uniform color bands—weekdays (Mon–Fri avg: 88.3 µg/m³) are only marginally higher than weekends (Sat–Sun avg: 81.4 µg/m³). 
+          <strong>Conclusion:</strong> Air pollution is overwhelmingly governed by seasonal meteorology and regional burning, not weekly commuter cycles.
+        </p>
+      </div>
+    </section>
+
+    <!-- TASK 7: Monthly Best-to-Worst Spread Band Chart -->
+    <section id="task7" class="chart-card">
+      <div class="card-header-flex">
+        <div>
+          <div class="task-badge-title">
+            <span class="task-tag">Task 7</span>
+            <h2 class="task-title">Monthly Best-to-Worst Dispersion (Band Chart)</h2>
+          </div>
+          <p class="task-question">Question: How wide is the gap between the best and worst day in each month?</p>
+        </div>
+        <div class="header-badges">
+          <span class="stat-chip danger">Max Spread: November (239.1 µg/m³)</span>
+          <span class="stat-chip warning">May Spread: 213.6 µg/m³</span>
+        </div>
+      </div>
+
+      <div class="custom-legend">
+        <div class="legend-item"><span class="legend-color-box" style="background: rgba(59, 130, 246, 0.3); border: 1px dashed #60a5fa;"></span> Shaded Range: Monthly Minimum to Maximum</div>
+        <div class="legend-item"><span class="legend-line" style="background: #1d4ed8;"></span> Monthly Arithmetic Mean</div>
+        <div class="legend-item"><span class="legend-color-box" style="background: #dc2626; border-radius: 50%; width: 10px; height: 10px;"></span> Maximum Day</div>
+        <div class="legend-item"><span class="legend-color-box" style="background: #10b981; border-radius: 50%; width: 10px; height: 10px;"></span> Minimum Day</div>
+      </div>
+
+      <div id="chart-task7" class="svg-container"></div>
+
+      <div class="insight-box">
+        <h4>⚠️ The Flaw of Monthly Averages</h4>
+        <p>
+          <strong>November has the widest spread of 239.1 µg/m³</strong> (ranging from 80.9 to 320.0 µg/m³), followed closely by <strong>May with a spread of 213.6 µg/m³</strong> (ranging from 31.4 to 245.0 µg/m³). 
+          A simple monthly average completely masks extreme volatility. For instance, May's average is 59.9 µg/m³ (seemingly moderate), but citizens endured an emergency spike of 245.0 µg/m³ on May 18.
+        </p>
+      </div>
+    </section>
+
+    <!-- TASK 8: De-noised Trend & Offline Sensor Audit -->
+    <section id="task8" class="chart-card">
+      <div class="card-header-flex">
+        <div>
+          <div class="task-badge-title">
+            <span class="task-tag">Task 8</span>
+            <h2 class="task-title">De-noised Trend (7-Day Moving Average) & Offline Sensor Gap</h2>
+          </div>
+          <p class="task-question">Question: What is the trend once daily noise is removed, and was the sensor working all year?</p>
+        </div>
+        <div class="header-badges">
+          <span class="stat-chip neutral">Thin Gray: Daily Raw</span>
+          <span class="stat-chip neutral">Thick Dark: 7-Day MA</span>
+          <span class="stat-chip danger">Shaded Hatch: 9-Day Sensor Blackout</span>
+        </div>
+      </div>
+
+      <div class="custom-legend">
+        <div class="legend-item"><span class="legend-line" style="background: #94a3b8; height: 1px;"></span> Daily City PM2.5 (Faint Raw)</div>
+        <div class="legend-item"><span class="legend-line" style="background: #0f172a; height: 3.5px;"></span> 7-Day Moving Average (Smoothed Trend)</div>
+        <div class="legend-item"><span class="legend-color-box" style="background: rgba(239, 68, 68, 0.25); border: 1px dashed #dc2626;"></span> Sensor Offline (March 12–20)</div>
+      </div>
+
+      <div id="chart-task8" class="svg-container"></div>
+
+      <div class="insight-box">
+        <h4>📡 Data Integrity & Smoothing Rigor</h4>
+        <ul>
+          <li><strong>Moving Average Integrity:</strong> The 7-day moving average smoothly reveals the macroeconomic U-shaped smog wave without daily jitter.</li>
+          <li><strong>Non-Interpolated Gap:</strong> Crucially, the line breaks at March 11 and does <em>not</em> average across the missing interval. Drawing a continuous line over missing data would deceive decision-makers by implying unmonitored air was stable.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- TASK 9: Focus + Context Brushing & Zooming -->
+    <section id="task9" class="chart-card">
+      <div class="card-header-flex">
+        <div>
+          <div class="task-badge-title">
+            <span class="task-tag">Task 9</span>
+            <h2 class="task-title">Interactive Exploration: Focus + Context Range Brushing</h2>
+          </div>
+          <p class="task-question">Question: Can the Director pick any period and look at it closely?</p>
+        </div>
+        <div class="btn-group">
+          <button class="btn primary" onclick="resetZoom()">↺ Reset Full Year</button>
+          <button class="btn" onclick="zoomPreset('nov')">🔍 November Peak Smog</button>
+          <button class="btn" onclick="zoomPreset('may')">🔍 May Anomaly</button>
+          <button class="btn" onclick="zoomPreset('summer')">🔍 Summer Clean Period</button>
+          <button class="btn" onclick="zoomPreset('gap')">🔍 March Sensor Gap</button>
+        </div>
+      </div>
+
+      <div id="chart-task9" class="svg-container"></div>
+
+      <div class="insight-box">
+        <h4>💡 Interactive Capabilities</h4>
+        <p>
+          Drag the handles or brush window across the bottom overview chart to dynamically zoom into any high-interest time window. 
+          Use the quick preset buttons above to immediately jump to critical policy periods such as the November smog crisis or the March telemetry failure.
+        </p>
+      </div>
+    </section>
+
+    <!-- DIRECTOR BRIEFING & COMMITTEE Q&A -->
+    <section id="director-briefing" class="chart-card" style="border-top: 4px solid #2563eb;">
+      <div class="card-header-flex">
+        <div>
+          <div class="task-badge-title">
+            <span class="task-tag" style="background:#dbeafe; color:#1e40af;">Executive Briefing</span>
+            <h2 class="task-title">Questions for the Director: Formal Evidence-Based Responses</h2>
+          </div>
+          <p class="task-question">Smog Action Committee Comprehensive Defense & Policy Decision Support</p>
+        </div>
+      </div>
+
+      <div class="qa-container">
+
+        <!-- Q1 -->
+        <article class="qa-card">
+          <div class="qa-header">
+            <h3 class="qa-title">1. Seasonality Analysis</h3>
+            <span class="qa-chart-ref">Charts: Task 2, 6 & 7</span>
+          </div>
+          <p class="qa-answer">
+            <span class="qa-highlight">Which months are worst and which are best? Roughly how many times higher is the worst month than the best?</span><br />
+            <strong>Worst Months:</strong> February (mean <strong>141.9 µg/m³</strong>), December (<strong>138.8 µg/m³</strong>), January (<strong>137.6 µg/m³</strong>), and November (<strong>129.0 µg/m³</strong>).<br />
+            <strong>Best Months:</strong> July (mean <strong>27.1 µg/m³</strong>) and June (<strong>32.7 µg/m³</strong>).<br />
+            <strong>Ratio:</strong> The worst month (February) is approximately <strong>5.24 times higher</strong> than the cleanest month (July).
+          </p>
+        </article>
+
+        <!-- Q2 -->
+        <article class="qa-card">
+          <div class="qa-header">
+            <h3 class="qa-title">2. Anomalies & Outliers</h3>
+            <span class="qa-chart-ref">Charts: Task 2 & 7</span>
+          </div>
+          <p class="qa-answer">
+            <span class="qa-highlight">Name the two highest days. Are they part of the seasonal pattern or isolated spikes? What real-world events could cause them?</span><br />
+            • <strong>Highest Day: November 8, 2025 (320.0 µg/m³).</strong> Part of the severe autumn seasonal smog episode, compounded by regional post-harvest paddy stubble burning, festival fireworks, and cold ground-level thermal inversions.<br />
+            • <strong>Second Highest Day: May 18, 2025 (245.0 µg/m³).</strong> This is an <em>isolated, out-of-season acute spike</em> during an otherwise moderate month (surrounding days averaged ~40–50 µg/m³). Meteorological records indicate a severe pre-monsoon dust storm or localized major fire outbreak.
+          </p>
+        </article>
+
+        <!-- Q3 -->
+        <article class="qa-card">
+          <div class="qa-header">
+            <h3 class="qa-title">3. Regulatory Guideline Exceedance</h3>
+            <span class="qa-chart-ref">Charts: Task 1, 2 & 5</span>
+          </div>
+          <p class="qa-answer">
+            <span class="qa-highlight">How many days were above 15 µg/m³, and how many above 75 µg/m³? What share of the recorded days is each?</span><br />
+            • <strong>Above WHO Guideline (15 µg/m³):</strong> <strong>355 out of 356 days (99.72%)</strong>. Exactly <em>one day</em> in the entire year (July 9, 11.8 µg/m³) met the clean air standard.<br />
+            • <strong>Above WHO Interim Target 1 (75 µg/m³):</strong> <strong>188 out of 356 days (52.81%)</strong>. Over half the year presented hazardous health risks.
+          </p>
+        </article>
+
+        <!-- Q4 -->
+        <article class="qa-card">
+          <div class="qa-header">
+            <h3 class="qa-title">4. Unhealthy Days Build-Up Trajectory</h3>
+            <span class="qa-chart-ref">Chart: Task 3</span>
+          </div>
+          <p class="qa-answer">
+            <span class="qa-highlight">In which months do unhealthy days build up fastest, and in which months does the curve go flat?</span><br />
+            • <strong>Fastest Build-up:</strong> January (31/31 days = 100%), February (28/28 days = 100%), March (21/22 days = 95.5%), November (30/30 days = 100%), and December (31/31 days = 100%).<br />
+            • <strong>Flat Curve:</strong> June (0 days), July (0 days), and August (0 days). The cumulative unhealthy curve plateaus completely at 100 days from May 19 to August 31.
+          </p>
+        </article>
+
+        <!-- Q5 -->
+        <article class="qa-card">
+          <div class="qa-header">
+            <h3 class="qa-title">5. Suburb vs. City Comparison</h3>
+            <span class="qa-chart-ref">Chart: Task 4</span>
+          </div>
+          <p class="qa-answer">
+            <span class="qa-highlight">Does the suburb follow the same pattern as the city centre? Where do they differ most?</span><br />
+            Yes, both stations exhibit synchronous seasonal tracking (correlation > 0.96), confirming shared regional weather influences. However, the suburb is consistently cleaner across all 12 months. The spatial gap is widest during peak winter (Jan: Δ27.4 µg/m³, Feb: Δ32.7 µg/m³, Dec: Δ26.3 µg/m³), where urban traffic congestion and localized heating emissions remain trapped under street-level inversions.
+          </p>
+        </article>
+
+        <!-- Q6 -->
+        <article class="qa-card">
+          <div class="qa-header">
+            <h3 class="qa-title">6. Monthly Severity Composition & Calendar Irregularities</h3>
+            <span class="qa-chart-ref">Chart: Task 5</span>
+          </div>
+          <p class="qa-answer">
+            <span class="qa-highlight">Which months have Severe days, and which month has the most Low days? Why are some months shorter than others?</span><br />
+            • <strong>Severe Days (>150 µg/m³):</strong> December (11 days), January (9 days), February (8 days), November (5 days), October (2 days), March (1 day), and May (1 day).<br />
+            • <strong>Most Low Days (≤35 µg/m³):</strong> July (28 days), June (17 days), and August (12 days).<br />
+            • <strong>Shorter Months:</strong> February has 28 days naturally; April, June, September, November have 30 days. Crucially, <strong>March is shorter at only 22 recorded days</strong> due to a 9-day station hardware blackout (March 12–20).
+          </p>
+        </article>
+
+        <!-- Q7 -->
+        <article class="qa-card">
+          <div class="qa-header">
+            <h3 class="qa-title">7. Day-of-Week vs. Monthly Drivers</h3>
+            <span class="qa-chart-ref">Chart: Task 6</span>
+          </div>
+          <p class="qa-answer">
+            <span class="qa-highlight">Is there a day-of-week pattern, or is the pattern mostly by month? What does that suggest about the cause of the pollution?</span><br />
+            The variation is overwhelmingly <strong>monthly and seasonal</strong> (27.1 µg/m³ in July to 141.9 µg/m³ in Feb; spread of 114.8 µg/m³). Across days of the week, variation is marginal (weekdays average 88.3 µg/m³ vs weekends 81.4 µg/m³; spread of only 9.8 µg/m³). This proves that local vehicular traffic alone is not the primary determinant; macroscopic meteorological stagnation and transboundary/regional biomass burning dominate.
+          </p>
+        </article>
+
+        <!-- Q8 -->
+        <article class="qa-card">
+          <div class="qa-header">
+            <h3 class="qa-title">8. Best-to-Worst Day Dispersion</h3>
+            <span class="qa-chart-ref">Chart: Task 7</span>
+          </div>
+          <p class="qa-answer">
+            <span class="qa-highlight">In which month is the gap between the best and worst day the widest? Why does a monthly average hide this?</span><br />
+            • <strong>Widest Gap: November (Spread of 239.1 µg/m³</strong>, min 80.9 to max 320.0 µg/m³), with May second at <strong>213.6 µg/m³</strong>.<br />
+            • <strong>The Hidden Danger:</strong> A single monthly arithmetic mean completely flattens lethal short-term spikes. In May (mean 59.9 µg/m³), the summary metric suggests "Moderate" air quality while completely hiding the acute 245.0 µg/m³ crisis that required emergency school closures.
+          </p>
+        </article>
+
+        <!-- Q9 -->
+        <article class="qa-card">
+          <div class="qa-header">
+            <h3 class="qa-title">9. Trend Integrity & Sensor Diagnostics</h3>
+            <span class="qa-chart-ref">Chart: Task 8</span>
+          </div>
+          <p class="qa-answer">
+            <span class="qa-highlight">Is there a long-term rise or fall, or only a seasonal cycle? How many days are missing, and why is an unbroken line over the gap misleading?</span><br />
+            The dataset reveals an annual <strong>recurrent seasonal cycle (U-shaped)</strong> rather than a monotonic multi-year trend. Exactly <strong>9 days are missing (March 12–20)</strong>. Connecting March 11 to March 21 with an unbroken line is scientifically invalid and misleading because it fabricates false continuity and falsely assumes air quality remained benign during an unmonitored equipment failure.
+          </p>
+        </article>
+
+        <!-- Q10 -->
+        <article class="qa-card">
+          <div class="qa-header">
+            <h3 class="qa-title">10. Granular Zoom Exploration</h3>
+            <span class="qa-chart-ref">Chart: Task 9</span>
+          </div>
+          <p class="qa-answer">
+            <span class="qa-highlight">Zoom into the month with the widest spread. What can you see there that you could not see in the full-year chart?</span><br />
+            Zooming into <strong>November</strong> reveals that air quality started around 80–110 µg/m³, violently quadrupled to 320.0 µg/m³ on November 8, sustained dangerous concentrations above 150 µg/m³ for four consecutive days, and then exhibited steep day-to-day fluctuations. The full-year chart compressed this multi-day health crisis into a single imperceptible needle spike.
+          </p>
+        </article>
+
+        <!-- Q11 -->
+        <article class="qa-card">
+          <div class="qa-header">
+            <h3 class="qa-title">11. Scientific Critique of the Committee's Pie Chart</h3>
+            <span class="qa-chart-ref">Visual Theory Reference</span>
+          </div>
+          <p class="qa-answer">
+            <span class="qa-highlight">The committee member used a pie chart of monthly averages. List two things it could not tell the Director that your charts do.</span><br />
+            1. <strong>Destruction of Time & Sequence:</strong> A pie chart displays static proportions with zero continuity, destroying the temporal order and obscuring the rate of change and cumulative risk (Tasks 2 & 3).<br />
+            2. <strong>Complete Elimination of Outliers & Extremes:</strong> Averaging months into 12 slices erased the lethal spikes of 320.0 µg/m³ (Nov 8) and 245.0 µg/m³ (May 18) and hid the spread (Task 7).<br />
+            3. <strong>Concealment of Hardware Outages:</strong> A pie chart gives March an equal slice, hiding that 9 days of vital telemetry were completely lost (Tasks 1 & 8).
+          </p>
+        </article>
+
+        <!-- Q12 & Recommendation -->
+        <div class="recommendation-box">
+          <h3 class="recommendation-title">🎯 12. Strategic Policy Recommendation for Outdoor School Activity Restrictions</h3>
+          <p class="qa-answer">
+            <strong>Question:</strong> <em>If the committee can restrict outdoor school activities for only two months, which two would you pick? Support your answer with evidence from at least two different charts.</em>
+          </p>
+          <div style="margin-top: 1rem;">
+            <p><strong>Primary Strategic Recommendation: <span style="color:#b91c1c; font-size:1.1rem;">November and December</span></strong></p>
+            <ul style="margin-top:0.5rem; padding-left:1.5rem; line-height:1.7;">
+              <li>
+                <strong>Evidence 1 (Task 2 & 7 - Peak Hazard & Dispersion):</strong> November experienced the single highest pollution peak of the entire year (<strong>320.0 µg/m³ on Nov 8</strong>) and the widest volatility spread (<strong>239.1 µg/m³</strong>). December recorded 11 Severe smog days (> 150 µg/m³) with an average of 138.8 µg/m³.
+              </li>
+              <li>
+                <strong>Evidence 2 (Task 3 & 5 - Total Population Exposure):</strong> In both November and December, <strong>100% of recorded days breached the 75 µg/m³ safety ceiling</strong> (30/30 days in Nov, 31/31 days in Dec). Together they contributed 61 consecutive days of hazardous air.
+              </li>
+              <li>
+                <strong>Evidence 3 (Task 5 - Severe Day Concentration):</strong> December has the highest frequency of Severe air days in the year (11 days), followed by November with 5 days, exposing developing children's lungs to critical respiratory risks during active school terms.
+              </li>
+              <li>
+                <em>Alternative Consideration:</em> While January and February also have high monthly means (137.6 and 141.9 µg/m³), winter break already curtails school exposure in January. Imposing restrictions during <strong>November and December</strong> provides the maximum protective impact when schools are fully in session.
+              </li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Embedded Dataset Fallback for Offline / file:// Protocol Compatibility -->
+  <script id="embedded-csv" type="text/plain">
+date,pm25_city,pm25_suburb,temp_c
+2025-01-01,105.8,80.4,10.0
+2025-01-02,145.3,152.1,11.3
+2025-01-03,132.7,104.5,10.8
+2025-01-04,133.7,110.3,5.7
+2025-01-05,136.4,111.2,13.8
+2025-01-06,150.2,121.6,10.2
+2025-01-07,163.3,151.1,16.3
+2025-01-08,135.2,93.6,8.1
+2025-01-09,107.0,102.0,9.6
+2025-01-10,123.2,100.5,13.2
+2025-01-11,189.3,156.9,10.0
+2025-01-12,121.2,108.4,11.7
+2025-01-13,134.6,129.0,8.7
+2025-01-14,119.3,90.9,14.0
+2025-01-15,155.5,112.0,10.9
+2025-01-16,102.4,71.6,11.1
+2025-01-17,105.3,77.2,14.6
+2025-01-18,93.3,69.6,14.4
+2025-01-19,117.0,90.4,12.1
+2025-01-20,175.3,129.2,14.5
+2025-01-21,132.1,98.6,12.2
+2025-01-22,196.6,166.3,14.2
+2025-01-23,138.6,96.5,13.8
+2025-01-24,111.7,80.3,11.9
+2025-01-25,111.4,94.7,13.1
+2025-01-26,173.3,121.7,13.1
+2025-01-27,135.5,101.8,13.6
+2025-01-28,161.2,114.1,14.3
+2025-01-29,145.3,107.6,16.2
+2025-01-30,145.8,118.9,14.7
+2025-01-31,166.6,152.3,13.6
+2025-02-01,108.1,90.5,13.3
+2025-02-02,99.5,70.7,16.9
+2025-02-03,218.4,178.5,17.5
+2025-02-04,144.7,111.4,12.8
+2025-02-05,139.6,95.5,16.2
+2025-02-06,156.1,108.3,13.4
+2025-02-07,129.1,110.8,13.5
+2025-02-08,118.7,84.4,13.3
+2025-02-09,150.8,120.4,15.8
+2025-02-10,165.1,127.5,12.4
+2025-02-11,136.8,101.5,13.9
+2025-02-12,114.7,106.8,20.4
+2025-02-13,120.0,100.7,15.0
+2025-02-14,156.0,116.5,15.6
+2025-02-15,95.2,80.0,18.1
+2025-02-16,139.0,114.4,14.0
+2025-02-17,186.0,177.0,17.6
+2025-02-18,149.5,117.1,15.4
+2025-02-19,102.4,78.5,18.0
+2025-02-20,117.6,83.2,17.0
+2025-02-21,142.9,102.8,18.5
+2025-02-22,114.9,84.9,16.9
+2025-02-23,144.1,126.1,16.0
+2025-02-24,237.8,157.3,17.8
+2025-02-25,133.0,88.7,16.9
+2025-02-26,122.5,88.0,20.2
+2025-02-27,187.2,131.7,15.2
+2025-02-28,142.6,104.3,17.7
+2025-03-01,122.0,115.0,20.3
+2025-03-02,104.3,99.6,22.4
+2025-03-03,97.0,69.4,19.8
+2025-03-04,143.9,109.8,17.8
+2025-03-05,149.8,120.0,18.5
+2025-03-06,144.7,104.3,17.5
+2025-03-07,129.6,99.3,20.7
+2025-03-08,110.0,87.6,18.3
+2025-03-09,95.9,75.4,19.3
+2025-03-10,91.2,58.1,19.0
+2025-03-11,162.9,157.7,21.0
+2025-03-21,144.0,119.4,20.4
+2025-03-22,79.9,64.4,23.8
+2025-03-23,104.6,91.8,22.6
+2025-03-24,121.1,103.5,22.7
+2025-03-25,103.8,103.7,22.0
+2025-03-26,102.1,77.7,24.9
+2025-03-27,143.7,96.5,19.9
+2025-03-28,111.1,90.6,23.4
+2025-03-29,51.1,42.0,24.3
+2025-03-30,94.8,70.9,22.5
+2025-03-31,117.5,91.8,21.6
+2025-04-01,126.0,120.3,24.6
+2025-04-02,115.4,85.0,23.8
+2025-04-03,135.0,106.4,19.9
+2025-04-04,78.1,54.9,25.7
+2025-04-05,67.4,44.0,21.7
+2025-04-06,58.0,50.6,25.5
+2025-04-07,104.5,81.1,24.8
+2025-04-08,81.3,58.2,25.3
+2025-04-09,85.2,66.0,25.9
+2025-04-10,75.8,62.8,26.4
+2025-04-11,108.7,101.8,28.1
+2025-04-12,99.2,74.0,28.3
+2025-04-13,71.7,54.0,27.9
+2025-04-14,64.7,47.8,22.6
+2025-04-15,78.7,58.7,26.7
+2025-04-16,86.8,55.3,26.3
+2025-04-17,109.0,92.2,25.4
+2025-04-18,74.3,66.1,29.4
+2025-04-19,60.9,54.8,26.2
+2025-04-20,62.3,46.8,27.0
+2025-04-21,79.7,60.6,26.3
+2025-04-22,81.9,77.0,27.1
+2025-04-23,67.7,64.0,28.3
+2025-04-24,68.9,59.5,27.2
+2025-04-25,76.0,54.7,29.2
+2025-04-26,85.1,65.8,31.7
+2025-04-27,70.1,59.3,26.1
+2025-04-28,62.1,51.0,28.9
+2025-04-29,67.1,46.7,29.4
+2025-04-30,76.9,61.6,26.3
+2025-05-01,62.6,50.5,28.7
+2025-05-02,77.9,60.9,29.8
+2025-05-03,48.4,35.9,28.4
+2025-05-04,70.0,51.9,30.2
+2025-05-05,55.3,36.5,31.5
+2025-05-06,46.5,37.3,31.2
+2025-05-07,70.5,60.4,32.8
+2025-05-08,44.0,40.4,30.8
+2025-05-09,52.4,53.3,31.1
+2025-05-10,56.3,48.6,26.7
+2025-05-11,57.0,41.7,32.7
+2025-05-12,72.7,51.4,30.7
+2025-05-13,46.4,37.6,32.8
+2025-05-14,72.7,51.1,30.5
+2025-05-15,65.0,54.9,28.7
+2025-05-16,64.9,56.1,34.6
+2025-05-17,50.9,44.7,33.3
+2025-05-18,245,210,32.4
+2025-05-19,55.3,45.3,30.6
+2025-05-20,39.0,32.5,26.9
+2025-05-21,44.8,32.8,30.5
+2025-05-22,40.2,26.3,31.3
+2025-05-23,42.5,33.3,32.4
+2025-05-24,44.1,38.2,29.4
+2025-05-25,67.3,56.6,32.4
+2025-05-26,44.2,34.9,36.3
+2025-05-27,43.5,35.0,29.9
+2025-05-28,62.9,49.8,31.1
+2025-05-29,44.9,39.7,34.0
+2025-05-30,39.7,23.9,30.7
+2025-05-31,31.4,27.1,33.3
+2025-06-01,50.3,35.9,33.7
+2025-06-02,35.7,28.3,31.1
+2025-06-03,39.1,31.1,33.8
+2025-06-04,24.5,20.4,31.5
+2025-06-05,33.0,28.1,35.5
+2025-06-06,29.2,24.4,31.6
+2025-06-07,37.1,33.6,33.3
+2025-06-08,40.7,33.6,33.9
+2025-06-09,48.4,36.1,28.8
+2025-06-10,30.2,23.7,33.2
+2025-06-11,30.3,23.1,38.2
+2025-06-12,41.0,34.5,30.7
+2025-06-13,28.8,22.0,34.3
+2025-06-14,35.1,27.4,32.1
+2025-06-15,38.8,29.9,31.3
+2025-06-16,24.0,16.6,36.2
+2025-06-17,39.1,34.3,36.2
+2025-06-18,41.7,37.8,37.1
+2025-06-19,23.9,21.2,32.7
+2025-06-20,35.3,34.4,33.6
+2025-06-21,25.2,20.9,33.7
+2025-06-22,26.3,22.1,32.1
+2025-06-23,29.2,24.6,37.2
+2025-06-24,32.9,29.0,34.4
+2025-06-25,31.0,22.6,33.1
+2025-06-26,35.8,29.0,33.4
+2025-06-27,24.9,19.1,33.3
+2025-06-28,28.4,22.2,33.9
+2025-06-29,18.0,13.4,34.5
+2025-06-30,24.2,18.5,35.7
+2025-07-01,37.3,27.5,31.7
+2025-07-02,26.9,23.1,33.9
+2025-07-03,28.5,22.1,30.8
+2025-07-04,25.1,18.4,31.0
+2025-07-05,20.9,13.9,31.7
+2025-07-06,30.9,25.1,35.1
+2025-07-07,28.2,23.3,32.4
+2025-07-08,29.1,24.3,33.3
+2025-07-09,11.8,11.4,30.7
+2025-07-10,19.1,17.6,33.4
+2025-07-11,25.2,20.3,34.2
+2025-07-12,34.1,30.0,32.2
+2025-07-13,18.4,14.9,28.7
+2025-07-14,26.1,20.7,34.3
+2025-07-15,30.1,27.7,34.5
+2025-07-16,28.8,21.2,29.2
+2025-07-17,30.6,24.5,31.8
+2025-07-18,33.4,26.3,36.0
+2025-07-19,23.7,19.8,31.6
+2025-07-20,17.1,10.9,32.3
+2025-07-21,33.4,24.1,32.9
+2025-07-22,28.2,23.5,31.4
+2025-07-23,28.4,23.5,29.3
+2025-07-24,48.9,36.3,31.9
+2025-07-25,26.9,24.5,32.0
+2025-07-26,21.1,16.9,31.4
+2025-07-27,19.8,16.7,29.8
+2025-07-28,16.8,13.0,31.3
+2025-07-29,37.1,30.5,33.3
+2025-07-30,32.9,29.9,30.5
+2025-07-31,20.9,15.6,29.5
+2025-08-01,25.5,17.3,30.3
+2025-08-02,29.6,24.3,27.9
+2025-08-03,23.4,19.1,32.8
+2025-08-04,27.7,21.7,27.1
+2025-08-05,20.7,17.3,30.9
+2025-08-06,26.8,23.9,33.4
+2025-08-07,49.0,31.8,34.9
+2025-08-08,28.2,22.0,27.6
+2025-08-09,22.0,15.8,27.2
+2025-08-10,27.5,26.6,33.9
+2025-08-11,40.2,36.6,29.6
+2025-08-12,42.3,33.6,29.5
+2025-08-13,38.1,29.9,31.8
+2025-08-14,34.1,26.5,29.6
+2025-08-15,34.5,26.8,26.1
+2025-08-16,24.7,19.4,25.6
+2025-08-17,43.6,36.1,27.0
+2025-08-18,36.0,35.4,27.9
+2025-08-19,41.6,36.8,28.4
+2025-08-20,40.8,33.5,29.6
+2025-08-21,38.9,34.2,27.7
+2025-08-22,43.1,34.0,30.9
+2025-08-23,41.0,31.9,28.6
+2025-08-24,37.3,35.7,28.4
+2025-08-25,39.1,31.6,30.0
+2025-08-26,40.5,37.0,25.9
+2025-08-27,39.3,33.2,24.5
+2025-08-28,52.2,43.5,27.0
+2025-08-29,69.0,62.7,24.3
+2025-08-30,42.6,34.0,26.0
+2025-08-31,44.3,33.7,27.2
+2025-09-01,52.9,42.3,26.4
+2025-09-02,45.5,35.6,26.7
+2025-09-03,69.3,57.5,23.8
+2025-09-04,44.7,33.4,24.8
+2025-09-05,51.1,46.4,27.0
+2025-09-06,48.4,29.7,24.5
+2025-09-07,33.8,28.9,24.5
+2025-09-08,57.3,45.1,23.3
+2025-09-09,48.2,31.0,24.2
+2025-09-10,58.7,53.7,26.5
+2025-09-11,59.1,44.1,22.7
+2025-09-12,76.7,55.2,23.8
+2025-09-13,36.0,27.7,26.9
+2025-09-14,42.8,35.0,19.4
+2025-09-15,48.1,40.1,21.5
+2025-09-16,81.5,64.5,21.3
+2025-09-17,40.5,31.9,22.3
+2025-09-18,55.2,36.8,19.9
+2025-09-19,83.1,73.6,25.9
+2025-09-20,74.1,59.5,20.4
+2025-09-21,81.3,52.7,22.9
+2025-09-22,58.6,51.6,21.0
+2025-09-23,83.9,81.8,24.0
+2025-09-24,79.0,78.2,21.1
+2025-09-25,46.9,36.5,24.6
+2025-09-26,41.8,44.7,21.4
+2025-09-27,65.0,48.0,20.4
+2025-09-28,94.8,77.4,20.7
+2025-09-29,54.1,40.3,17.0
+2025-09-30,73.8,54.7,18.3
+2025-10-01,62.3,47.8,18.1
+2025-10-02,95.4,78.5,20.4
+2025-10-03,94.6,70.6,21.6
+2025-10-04,63.1,43.4,16.2
+2025-10-05,82.0,77.3,18.9
+2025-10-06,62.0,44.8,18.9
+2025-10-07,69.2,62.3,18.5
+2025-10-08,73.3,66.5,18.6
+2025-10-09,77.1,54.5,19.4
+2025-10-10,95.4,79.3,19.5
+2025-10-11,67.0,62.1,16.3
+2025-10-12,77.4,62.5,19.2
+2025-10-13,65.0,56.6,19.5
+2025-10-14,77.4,55.8,15.5
+2025-10-15,72.7,50.4,19.4
+2025-10-16,74.6,60.7,18.6
+2025-10-17,87.8,62.9,14.4
+2025-10-18,68.0,49.7,13.8
+2025-10-19,87.9,69.9,16.9
+2025-10-20,70.6,54.0,17.4
+2025-10-21,92.9,71.6,17.2
+2025-10-22,100.4,75.1,15.8
+2025-10-23,98.1,73.9,14.8
+2025-10-24,86.5,79.2,16.6
+2025-10-25,117.7,96.6,15.3
+2025-10-26,78.7,61.3,17.5
+2025-10-27,78.1,60.8,18.4
+2025-10-28,150.1,124.4,14.9
+2025-10-29,162.7,158.9,14.1
+2025-10-30,96.9,66.3,13.7
+2025-10-31,132.8,94.6,13.3
+2025-11-01,145.7,117.9,12.5
+2025-11-02,80.9,59.2,12.9
+2025-11-03,97.3,84.1,12.7
+2025-11-04,129.0,93.0,12.1
+2025-11-05,110.8,86.7,12.1
+2025-11-06,109.3,90.0,14.3
+2025-11-07,155.9,134.1,13.9
+2025-11-08,320,290,14.3
+2025-11-09,115.0,92.5,15.6
+2025-11-10,144.4,117.3,15.1
+2025-11-11,143.7,114.6,12.9
+2025-11-12,121.3,91.9,14.6
+2025-11-13,109.9,72.8,12.1
+2025-11-14,112.4,74.7,14.9
+2025-11-15,142.1,123.2,14.3
+2025-11-16,104.9,82.3,14.1
+2025-11-17,83.5,57.8,11.1
+2025-11-18,150.6,104.4,14.0
+2025-11-19,114.1,79.2,12.1
+2025-11-20,175.5,131.2,11.5
+2025-11-21,102.0,83.8,10.8
+2025-11-22,123.2,91.0,14.9
+2025-11-23,107.1,84.1,11.6
+2025-11-24,139.3,108.0,15.7
+2025-11-25,151.4,125.6,12.0
+2025-11-26,86.6,66.4,11.2
+2025-11-27,119.1,107.0,9.7
+2025-11-28,146.7,150.4,7.8
+2025-11-29,89.6,77.4,10.0
+2025-11-30,138.9,116.0,11.1
+2025-12-01,149.1,127.2,6.6
+2025-12-02,106.4,81.4,10.5
+2025-12-03,118.4,90.2,13.4
+2025-12-04,166.5,139.7,15.1
+2025-12-05,176.4,142.1,13.8
+2025-12-06,78.7,49.6,3.6
+2025-12-07,88.1,66.0,10.0
+2025-12-08,155.2,123.7,14.1
+2025-12-09,134.6,114.9,11.8
+2025-12-10,123.8,128.4,6.8
+2025-12-11,104.3,77.1,13.9
+2025-12-12,173.2,160.6,13.1
+2025-12-13,156.6,133.4,11.3
+2025-12-14,110.6,81.8,11.6
+2025-12-15,110.2,84.7,10.3
+2025-12-16,183.7,138.4,18.0
+2025-12-17,156.0,131.2,12.2
+2025-12-18,143.2,107.5,10.6
+2025-12-19,102.0,73.1,10.1
+2025-12-20,139.3,129.7,8.7
+2025-12-21,109.4,91.1,14.9
+2025-12-22,138.3,88.0,13.9
+2025-12-23,150.6,121.1,10.2
+2025-12-24,105.2,81.9,5.8
+2025-12-25,124.1,108.5,10.6
+2025-12-26,190.4,164.1,9.3
+2025-12-27,118.8,103.3,9.5
+2025-12-28,144.4,116.8,13.9
+2025-12-29,199.2,150.7,9.2
+2025-12-30,127.2,107.2,12.5
+2025-12-31,219.3,173.4,9.2
+
+  </script>
+
+  <!-- Single JS File Link -->
+  <script src="script.js"></script>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>FAST School of Computing, National University of Computer and Emerging Sciences, Islamabad</p>
+    <p>Data Analysis & Visualization • Lab Manual 10 • Academic Year 2025–2026</p>
+    <div class="footer-links">
+      <a href="#task1">Data Audit</a>
+      <a href="#task2">City Series</a>
+      <a href="#task5">Composition</a>
+      <a href="#task8">Sensor Diagnostics</a>
+      <a href="#director-briefing">Director Briefing</a>
+    </div>
+  </footer>
+
+</body>
+</html>
