@@ -1,0 +1,58 @@
+Lab 11 — Text Analysis Explanations
+
+Part A:
+1. Tweets contain handles, hashtags, links, emojis, and stretched words. A naive tokenizer splits them into meaningless fragments (e.g., splitting a URL into 'http', 't', 'co'). We must use TweetTokenizer to keep these intact. Handles and links should be removed as they add noise, but emojis and stretched words hold sentiment value and should be kept.
+2. Removing standard stop words like "not" or "no" flips the meaning of phrases like "not good," making negative tweets appear positive. We must remove these negations from the stop-word list before filtering.
+3. Stemming aggressively chops off word endings, turning "flying" into "fli". Lemmatization intelligently converts words to their base form ("fly"), which preserves readable vocabulary and is better for finding meaningful insights. We lose thousands of unique tokens during cleaning, but this reduces noise and standardizes the text.
+
+Part B:
+1. Airline names dominate the raw frequencies, showing that the dataset was likely gathered by scraping those specific @handles. We must remove them to see what customers are actually talking about.
+2. Positive and negative tweets share common words like "get" and "time". TF-IDF is required because it penalizes these universal words and highlights distinctive words that strongly separate the two sentiments (e.g., "thank" for positive, "delay" for negative).
+3. Two negative phrases pointing to operational problems are "customer service" and "cancelled flight". A phrase that flips sentiment is "not good."
+4. I would show the Director the bar chart of bigrams. A word cloud is visually engaging but lacks precise magnitude comparisons and hides important two-word contexts.
+
+Part C:
+1. VADER agreed with human labels about 54% of the time. VADER struggles most with classifying neutral and negative tweets accurately, as it tends to miss domain-specific negative context (like "tarmac" or "rebooked").
+2. The largest cause of disagreement is sarcasm, where passengers use positive words to express extreme frustration. A proposed fix is to manually add custom negative weights to specific airline industry words like "delay" and "cancelled" in the VADER lexicon.
+3. Three failures: 
+- "Wonderful, another cancelled flight. Just what I wanted!" (VADER sees "wonderful" and scores it positive).
+- "My suitcase never arrived at the destination." (VADER misses the context and scores it neutral).
+- "The crew was lovely and kind, but I am still stranded overnight." (VADER heavily weights "lovely" and "kind," scoring it positive).
+4. When filtering for high confidence, VADER's accuracy increases. This matters because if human labelers disagree on the "ground truth," an automated lexicon cannot be expected to perfectly classify the text.
+
+Part D:
+1. The data supports the Director's theory. US Airways has a higher share of "Customer Service Issue" complaints, while Delta has a much higher share of "Late Flight" (operations) complaints.
+2. Raw counts mislead because larger airlines (like United) naturally have more tweets. We should report the "Negative %" (proportions) to fairly compare airlines regardless of their total volume.
+3. Negative sentiment spikes on specific dates (e.g., Feb 22, 2015). The data shows the spike exists, but without external context like historical weather data, we cannot confirm *why* it happened.
+4. Priority Rule: Answer tweets containing "Lost Luggage" or "Flight Attendant Complaints" first. Late flights are systemic and hard for a social agent to fix, while acute customer service failures require immediate human intervention to salvage the relationship.
+
+Part E:
+1. Three ways this dataset misleads: 
+- Twitter users skew younger and more vocal, missing the silent majority.
+- Passengers usually only tweet when extremely angry or exceptionally happy.
+- The data is from a single week in 2015 and may capture a unique weather event rather than average operations. I trust the "daily spikes" finding the least without knowing the external weather context.
+2. If using today's data, complaints about "slow wifi" would likely vanish (as it's now standard), while complaints about seating fees, app glitches, or masking policies (post-COVID) would appear.
+3. Against replacing the team. VADER's 54% accuracy is too low for automated customer service responses, as it misses sarcasm and travel-specific pain points. The tool should be used to triage and spot trends, but humans must still handle the responses.
+
+Part F (Additional Insights):
+
+Insight 1:
+Observation: A massive portion of negative tweets come from repeat complainers.
+Evidence: 66% of negative tweets belong to users who posted more than one negative tweet in this short timeframe.
+Why it matters: A small number of stranded, highly frustrated passengers are generating the majority of the negative PR noise.
+Recommended action: Implement a rapid-response protocol for users who tweet more than once in a 12-hour window to de-escalate the situation offline.
+Confidence and limits: High confidence in the frequency, but limited because we don't know if these are bots or genuine stranded passengers.
+
+Insight 2:
+Observation: The data contains major spelling anomalies for common industry words.
+Evidence: The non-word "Flightled" appears 501 times in the dataset.
+Why it matters: If the airline searches for complaints using standard spelling ("cancelled flight"), they will miss hundreds of complaints due to typos or scraping errors in the data collection.
+Recommended action: Use flexible regex matching or fuzzy string matching when setting up keyword alerts for the customer service team.
+Confidence and limits: High confidence that the typo exists, but unsure if it was a user trend or a data-scraping glitch.
+
+Insight 3:
+Observation: Negative tweets are shared publicly more than twice as often as positive or neutral tweets.
+Evidence: 6.5% of negative tweets were retweeted, compared to just 3.2% for positive tweets.
+Why it matters: Bad news travels faster than good news. A single mishandled complaint has double the viral risk of a compliment.
+Recommended action: Authorize the social media team to issue immediate compensation (vouchers/miles) publicly to highly-retweeted complaints to show the brand taking accountability.
+Confidence and limits: Medium confidence. The retweet rate is technically low overall, but the disparity between negative and positive is clear.

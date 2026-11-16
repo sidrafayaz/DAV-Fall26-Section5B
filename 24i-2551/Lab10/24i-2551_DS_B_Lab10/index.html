@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lab 10 — Time Series Visualization (24i-2551)</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background-color: #f5f6f8;
+      color: #1e293b;
+      line-height: 1.5;
+      padding: 24px 16px 48px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    header {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 18px 22px;
+      margin-bottom: 20px;
+    }
+
+    header h1 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 4px;
+    }
+
+    header p {
+      font-size: 13.5px;
+      color: #475569;
+    }
+
+    .card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 18px 22px;
+      margin-bottom: 18px;
+    }
+
+    .card h2 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #0f172a;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: #475569;
+      margin-bottom: 12px;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      font-size: 12.5px;
+      color: #334155;
+      margin-bottom: 10px;
+      align-items: center;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .swatch {
+      width: 12px;
+      height: 12px;
+      border-radius: 2px;
+      display: inline-block;
+    }
+
+    .swatch-line {
+      width: 18px;
+      height: 3px;
+      display: inline-block;
+    }
+
+    /* Task 1 Summary Box */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+      margin: 12px 0;
+    }
+
+    .stat-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 10px 12px;
+    }
+
+    .stat-label {
+      font-size: 11.5px;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    .stat-value {
+      font-size: 18px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-top: 2px;
+    }
+
+    .highlight-warn {
+      color: #dc2626;
+    }
+
+    .task-note {
+      font-size: 13px;
+      color: #334155;
+      background: #f8fafc;
+      border-left: 3px solid #2563eb;
+      padding: 8px 12px;
+      margin-top: 8px;
+    }
+
+    /* SVG & Axis Styling */
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .axis path,
+    .axis line {
+      stroke: #cbd5e1;
+    }
+
+    .axis text {
+      fill: #475569;
+      font-size: 11px;
+    }
+
+    .axis-label {
+      fill: #475569;
+      font-size: 11.5px;
+      font-weight: 500;
+    }
+
+    .grid line {
+      stroke: #f1f5f9;
+    }
+
+    .grid path {
+      stroke: none;
+    }
+
+    /* Controls / Buttons */
+    .controls-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .btn {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 5px;
+      padding: 5px 11px;
+      font-size: 12px;
+      color: #1e293b;
+      cursor: pointer;
+    }
+
+    .btn:hover {
+      background: #e2e8f0;
+    }
+
+    .btn.active {
+      background: #2563eb;
+      color: #ffffff;
+      border-color: #2563eb;
+    }
+
+    /* Tooltip */
+    #tooltip {
+      position: absolute;
+      pointer-events: none;
+      opacity: 0;
+      background: rgba(15, 23, 42, 0.92);
+      color: #ffffff;
+      padding: 7px 10px;
+      border-radius: 5px;
+      font-size: 12px;
+      line-height: 1.4;
+      z-index: 100;
+      transition: opacity 0.1s ease;
+    }
+
+    /* Questions for the Director Table */
+    .qa-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .qa-item {
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 10px 14px;
+      background: #fcfcfd;
+      font-size: 13px;
+    }
+
+    .qa-item strong.topic {
+      color: #1e40af;
+      display: block;
+      margin-bottom: 3px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Lab 10: Air Quality Time Series Analysis (2025)</h1>
+      <p><strong>Student Roll Number:</strong> 24i-2551 &nbsp;|&nbsp; <strong>Dataset:</strong> <code>air_quality_2025.csv</code> (City Environment Office)</p>
+    </header>
+
+    <!-- TASK 1 -->
+    <section class="card" id="sec-task1">
+      <h2>Task 1: Dataset Completeness &amp; Date Range Check</h2>
+      <p class="subtitle">Count rows, find first and last dates, and compare with the 365 days in 2025.</p>
+      <div id="task1-summary"></div>
+    </section>
+
+    <!-- TASK 2 -->
+    <section class="card" id="sec-task2">
+      <h2>Task 2: How did PM2.5 in the city centre change through the year?</h2>
+      <p class="subtitle" id="task2-subtitle"></p>
+      <div id="chart-task2"></div>
+    </section>
+
+    <!-- TASK 3 -->
+    <section class="card" id="sec-task3">
+      <h2>Task 3: How quickly did unhealthy days (above 75 µg/m³) build up during the year?</h2>
+      <p class="subtitle" id="task3-subtitle"></p>
+      <div id="chart-task3"></div>
+    </section>
+
+    <!-- TASK 4 -->
+    <section class="card" id="sec-task4">
+      <h2>Task 4: Does the suburb behave like the city centre?</h2>
+      <p class="subtitle">Daily PM2.5 comparison between the City Centre and Suburb stations across 2025.</p>
+      <div class="legend">
+        <span class="legend-item"><span class="swatch-line" style="background:#2563eb;"></span> City Centre (pm25_city)</span>
+        <span class="legend-item"><span class="swatch-line" style="background:#ea580c;"></span> Suburb (pm25_suburb)</span>
+      </div>
+      <div id="chart-task4"></div>
+    </section>
+
+    <!-- TASK 5 -->
+    <section class="card" id="sec-task5">
+      <h2>Task 5: In each month, how are the days split between pollution levels?</h2>
+      <p class="subtitle">Monthly day counts stacked by pollution level using <code>d3.rollup</code> and <code>d3.stack</code>.</p>
+      <div class="controls-row">
+        <div class="legend" style="margin-bottom:0;">
+          <span class="legend-item"><span class="swatch" style="background:#dbeafe;border:1px solid #93c5fd;"></span> Low (≤ 35)</span>
+          <span class="legend-item"><span class="swatch" style="background:#60a5fa;"></span> Moderate (36–75)</span>
+          <span class="legend-item"><span class="swatch" style="background:#2563eb;"></span> High (76–150)</span>
+          <span class="legend-item"><span class="swatch" style="background:#1e3a8a;"></span> Severe (&gt; 150)</span>
+        </div>
+        <div>
+          <button class="btn task5-toggle active" data-mode="bar">Stacked Bar</button>
+          <button class="btn task5-toggle" data-mode="area">Stacked Area</button>
+        </div>
+      </div>
+      <div id="chart-task5"></div>
+      <p class="task-note">
+        <strong>Why some months are shorter than others:</strong> Calendar months naturally have 28 (Feb), 30 (Apr, Jun, Sep, Nov), or 31 days. However, <strong>March is noticeably shorter (only 22 days instead of 31)</strong> because the sensor was offline for <strong>9 days (2025-03-12 to 2025-03-20)</strong>.
+      </p>
+    </section>
+
+    <!-- TASK 6 -->
+    <section class="card" id="sec-task6">
+      <h2>Task 6: Is pollution tied to the day of the week, the month, or both?</h2>
+      <p class="subtitle">Average City PM2.5 (µg/m³) for every Month × Day-of-Week combination (<code>d3.scaleBand</code> &amp; <code>d3.scaleSequential</code>).</p>
+      <div id="chart-task6"></div>
+    </section>
+
+    <!-- TASK 7 -->
+    <section class="card" id="sec-task7">
+      <h2>Task 7: How wide is the gap between the best and worst day in each month?</h2>
+      <p class="subtitle">Monthly minimum-to-maximum range shaded as a band with the monthly mean drawn through it.</p>
+      <div class="legend">
+        <span class="legend-item"><span class="swatch" style="background:#fed7aa;border:1px solid #fb923c;"></span> Min to Max Range</span>
+        <span class="legend-item"><span class="swatch-line" style="background:#c2410c;"></span> Monthly Mean</span>
+      </div>
+      <div id="chart-task7"></div>
+    </section>
+
+    <!-- TASK 8 -->
+    <section class="card" id="sec-task8">
+      <h2>Task 8: What is the trend once daily noise is removed, and was the sensor working all year?</h2>
+      <p class="subtitle" id="task8-subtitle"></p>
+      <div class="legend">
+        <span class="legend-item"><span class="swatch-line" style="background:#93c5fd;height:2px;"></span> Daily City PM2.5</span>
+        <span class="legend-item"><span class="swatch-line" style="background:#1e3a8a;height:3px;"></span> 7-Day Moving Average</span>
+        <span class="legend-item"><span class="swatch" style="background:#fee2e2;border:1px dashed #ef4444;"></span> Sensor Offline Gap (9 missing days)</span>
+      </div>
+      <div id="chart-task8"></div>
+    </section>
+
+    <!-- TASK 9 -->
+    <section class="card" id="sec-task9">
+      <h2>Task 9: Interactive Period Explorer (Brush &amp; Zoom)</h2>
+      <p class="subtitle">Drag across the bottom overview chart to zoom into any period on the main chart.</p>
+      <div class="controls-row">
+        <span id="task9-range-label" style="font-size:12.5px;font-weight:600;color:#334155;">Showing: Full Year (01 Jan 2025 to 31 Dec 2025)</span>
+        <div>
+          <button class="btn" id="btn-zoom-nov">Zoom to Nov (Widest Spread)</button>
+          <button class="btn" id="btn-reset-zoom">Reset Full Year</button>
+        </div>
+      </div>
+      <div id="chart-task9"></div>
+    </section>
+
+    <!-- QUESTIONS FOR THE DIRECTOR -->
+    <section class="card" id="sec-director">
+      <h2>Questions for the Director — Demo Reference Answers</h2>
+      <p class="subtitle">Direct answers referencing specific charts, dates, months, and numbers from the 2025 dataset.</p>
+      <div class="qa-list">
+        <div class="qa-item">
+          <strong class="topic">1. Seasonality (Tasks 2, 6, 7)</strong>
+          <strong>Worst months:</strong> February (mean <strong>141.9 µg/m³</strong>), December (<strong>138.8 µg/m³</strong>), January (<strong>137.6 µg/m³</strong>), and November (<strong>129.0 µg/m³</strong>). <strong>Best months:</strong> July (mean <strong>27.1 µg/m³</strong>), June (<strong>32.7 µg/m³</strong>), and August (<strong>36.9 µg/m³</strong>). The worst month (February, 141.9 µg/m³) is <strong>5.2 times higher</strong> than the best month (July, 27.1 µg/m³).
+        </div>
+        <div class="qa-item">
+          <strong class="topic">2. Anomalies (Task 2 &amp; Task 7)</strong>
+          The two highest days are <strong>2025-11-08 (320.0 µg/m³)</strong> and <strong>2025-05-18 (245.0 µg/m³)</strong>. Both are <strong>isolated single-day spikes</strong> jumping far above surrounding days (especially May 18, which occurred during a moderate spring month averaging 59.9 µg/m³). Real-world causes include intense crop-residue burning + stagnant thermal inversion in November, and a pre-monsoon dust storm or nearby biomass/industrial fire on May 18.
+        </div>
+        <div class="qa-item">
+          <strong class="topic">3. Guideline Exceedances (Task 2)</strong>
+          <strong>355 out of 356 recorded days (99.7%)</strong> exceeded the WHO 24-hour guideline of 15 µg/m³ (only <code>2025-07-09</code> at 11.8 µg/m³ was safe). <strong>188 out of 356 recorded days (52.8%)</strong> exceeded the WHO Interim Target 1 of 75 µg/m³.
+        </div>
+        <div class="qa-item">
+          <strong class="topic">4. Build-up of Unhealthy Days (Task 3)</strong>
+          Unhealthy days (&gt; 75 µg/m³) build up <strong>fastest in winter and late autumn</strong>: January (31/31 days), February (28/28 days), March (21/22 days), November (30/30 days), and December (31/31 days), where the slope rises by 1 day every day. The curve goes <strong>completely flat from June to August</strong> (0 days above 75 µg/m³ in Jun, Jul, Aug; and only 2 days in May).
+        </div>
+        <div class="qa-item">
+          <strong class="topic">5. City vs. Suburb Comparison (Task 4)</strong>
+          Yes, the suburb follows the <strong>same U-shaped seasonal pattern</strong> and experiences the same spike dates (Nov 8 at 290.0 µg/m³, May 18 at 210.0 µg/m³), but stays ~20% cleaner overall. They <strong>differ most in winter</strong> — especially <strong>February</strong> (mean gap of <strong>32.7 µg/m³</strong>: City 141.9 vs. Suburb 109.2 µg/m³) and <strong>January (27.4 µg/m³)</strong> — because winter temperature inversions trap urban traffic and local emissions in the city centre, whereas in <strong>July</strong> they differ by only <strong>5.2 µg/m³</strong>.
+        </div>
+        <div class="qa-item">
+          <strong class="topic">6. Monthly Composition &amp; Missing Days (Task 5)</strong>
+          <strong>Months with Severe (&gt; 150 µg/m³) days:</strong> December (11 days), January (9), February (8), November (5), October (2), March (1), and May (1). <strong>Month with the most Low (≤ 35 µg/m³) days:</strong> July (<strong>28 days</strong>), followed by June (17) and August (12). <strong>March is shorter (22 days)</strong> because 9 days of readings (<code>2025-03-12</code> to <code>2025-03-20</code>) are missing while the sensor was offline.
+        </div>
+        <div class="qa-item">
+          <strong class="topic">7. Day-of-Week vs. Monthly Pattern (Task 6 Heatmap)</strong>
+          The pattern is <strong>overwhelmingly by month (season)</strong> rather than day of the week. Across weekdays, the annual average barely varies (from <strong>80.6 µg/m³ on Saturday</strong> to <strong>90.4 µg/m³ on Tuesday</strong>), whereas monthly averages swing from <strong>27.1 µg/m³ (Jul)</strong> to <strong>141.9 µg/m³ (Feb)</strong>. This shows pollution is primarily driven by seasonal meteorology (winter inversions vs. summer monsoon washout) and regional winter sources rather than weekday commuter traffic alone.
+        </div>
+        <div class="qa-item">
+          <strong class="topic">8. Monthly Spread (Task 7 Band Chart)</strong>
+          The gap between best and worst day is <strong>widest in November</strong> with a spread of <strong>239.1 µg/m³</strong> (min <strong>80.9 µg/m³</strong> on Nov 2 to max <strong>320.0 µg/m³</strong> on Nov 8), followed by <strong>May</strong> (spread <strong>213.6 µg/m³</strong>: min 31.4 to max 245.0 µg/m³). A monthly average hides this by smoothing extreme spikes into a single number — for example, May's mean of <strong>59.9 µg/m³</strong> looks moderate and hides the hazardous <strong>245.0 µg/m³</strong> emergency on May 18.
+        </div>
+        <div class="qa-item">
+          <strong class="topic">9. Trend &amp; Data Quality (Task 8)</strong>
+          There is <strong>no one-way long-term rise or fall across 2025 — only a strong seasonal cycle</strong> (starting around ~138 µg/m³ in Jan, dropping to ~27 µg/m³ in Jul, and returning to ~139 µg/m³ in Dec). Exactly <strong>9 days are missing</strong> (<code>2025-03-12</code> to <code>2025-03-20</code>). Drawing an unbroken line across the gap is misleading because it fabricates a smooth linear change between March 11 (162.9 µg/m³) and March 21 (144.0 µg/m³), hiding the sensor failure.
+        </div>
+        <div class="qa-item">
+          <strong class="topic">10. Zooming into November (Task 9 Brush &amp; Zoom)</strong>
+          Zooming into <strong>November</strong> reveals the day-by-day build-up and recovery around the biggest spike: PM2.5 rose steadily from <strong>80.9 µg/m³ (Nov 2)</strong> to <strong>155.9 µg/m³ (Nov 7)</strong>, spiked to <strong>320.0 µg/m³ on Nov 8</strong>, dropped sharply back to <strong>125.7 µg/m³ on Nov 9</strong>, and had a smaller secondary peak on <strong>Nov 20 (175.5 µg/m³)</strong> — details that are squashed together in the full-year view.
+        </div>
+        <div class="qa-item">
+          <strong class="topic">11. Why the Committee Member's Pie Chart Failed</strong>
+          (1) <strong>No time order or rate of change:</strong> A pie chart turns monthly averages into slices of a whole, hiding chronological progression, seasonal slopes, and when pollution rises or falls. (2) <strong>Hides daily extremes, thresholds, and missing data:</strong> It conceals hazardous daily spikes (320.0 µg/m³ on Nov 8), the number of days exceeding 75 µg/m³ (188 days), and the 9-day sensor outage in March.
+        </div>
+        <div class="qa-item">
+          <strong class="topic">12. Two-Month Recommendation for School Outdoor Restrictions</strong>
+          <strong>Recommendation: December and February (or January &amp; December).</strong><br/>
+          • <em>Evidence 1 — Task 5 (Stacked Level Composition):</em> <strong>December</strong> has the highest number of Severe (&gt;150 µg/m³) days (<strong>11 Severe + 20 High = 31/31 days &gt; 75</strong>), followed by <strong>January (9 Severe + 22 High = 31/31 days &gt; 75)</strong> and <strong>February (8 Severe + 20 High = 28/28 days &gt; 75)</strong>.<br/>
+          • <em>Evidence 2 — Task 6 &amp; Task 7 (Heatmap &amp; Monthly Mean/Band):</em> <strong>February (141.9 µg/m³)</strong> and <strong>December (138.8 µg/m³)</strong> (with January at 137.6 µg/m³) have the highest monthly averages across all days of the week, meaning children face hazardous air on 100% of school days in those months.
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div id="tooltip"></div>
+  <script src="script.js"></script>
+</body>
+</html>
+

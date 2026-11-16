@@ -1,0 +1,1039 @@
+{
+  "vocabulary_sizes": [
+    {
+      "index": "Before base reduction",
+      "Unique words": 10956
+    },
+    {
+      "index": "Porter stemming",
+      "Unique words": 8327
+    },
+    {
+      "index": "POS-aware lemmatization",
+      "Unique words": 9329
+    }
+  ],
+  "cleaning_audit": [
+    {
+      "step": "1 Raw tweet-aware tokens",
+      "vocabulary": 19853,
+      "total tokens": 291084,
+      "mean tokens/tweet": 20.095547117707973,
+      "median tokens/tweet": 21.0,
+      "empty tweets": 0,
+      "vocabulary change from previous": NaN,
+      "tokens lost from previous": NaN
+    },
+    {
+      "step": "2 Remove handles/URLs; decode HTML; strip #",
+      "vocabulary": 17204,
+      "total tokens": 273513,
+      "mean tokens/tweet": 18.882499137038316,
+      "median tokens/tweet": 20.0,
+      "empty tweets": 0,
+      "vocabulary change from previous": -2649.0,
+      "tokens lost from previous": 17571.0
+    },
+    {
+      "step": "3 Lowercase",
+      "vocabulary": 14285,
+      "total tokens": 273513,
+      "mean tokens/tweet": 18.882499137038316,
+      "median tokens/tweet": 20.0,
+      "empty tweets": 0,
+      "vocabulary change from previous": -2919.0,
+      "tokens lost from previous": -0.0
+    },
+    {
+      "step": "4 Reduce stretched letters",
+      "vocabulary": 14253,
+      "total tokens": 273513,
+      "mean tokens/tweet": 18.882499137038316,
+      "median tokens/tweet": 20.0,
+      "empty tweets": 0,
+      "vocabulary change from previous": -32.0,
+      "tokens lost from previous": -0.0
+    },
+    {
+      "step": "5 Alphabetic words / contractions",
+      "vocabulary": 11120,
+      "total tokens": 229031,
+      "mean tokens/tweet": 15.811598205039695,
+      "median tokens/tweet": 17.0,
+      "empty tweets": 3,
+      "vocabulary change from previous": -3133.0,
+      "tokens lost from previous": 44482.0
+    },
+    {
+      "step": "6 Remove stop words; retain negation",
+      "vocabulary": 10956,
+      "total tokens": 127399,
+      "mean tokens/tweet": 8.795236451501554,
+      "median tokens/tweet": 9.0,
+      "empty tweets": 24,
+      "vocabulary change from previous": -164.0,
+      "tokens lost from previous": 101632.0
+    },
+    {
+      "step": "7 POS-aware lemmatization",
+      "vocabulary": 9329,
+      "total tokens": 127399,
+      "mean tokens/tweet": 8.795236451501554,
+      "median tokens/tweet": 9.0,
+      "empty tweets": 24,
+      "vocabulary change from previous": -1627.0,
+      "tokens lost from previous": -0.0
+    },
+    {
+      "step": "8 Remove airline names and generic filler",
+      "vocabulary": 9291,
+      "total tokens": 124320,
+      "mean tokens/tweet": 8.582671729375216,
+      "median tokens/tweet": 9.0,
+      "empty tweets": 38,
+      "vocabulary change from previous": -38.0,
+      "tokens lost from previous": 3079.0
+    },
+    {
+      "step": "9 Exclude nonword artifact flightled",
+      "vocabulary": 9290,
+      "total tokens": 123824,
+      "mean tokens/tweet": 8.548429409734208,
+      "median tokens/tweet": 9.0,
+      "empty tweets": 38,
+      "vocabulary change from previous": -1.0,
+      "tokens lost from previous": 496.0
+    }
+  ],
+  "ablation_metrics": [
+    {
+      "input": "Raw tweets (final sentiment input)",
+      "accuracy": 0.5430445288229203,
+      "macro F1": 0.5106082272493624,
+      "predictions changed from raw": 0
+    },
+    {
+      "input": "Standard stop-word removal",
+      "accuracy": 0.49941318605453916,
+      "macro F1": 0.4775781058256871,
+      "predictions changed from raw": 1395
+    },
+    {
+      "input": "Negation-preserving removal",
+      "accuracy": 0.5375906109768727,
+      "macro F1": 0.5049425972289557,
+      "predictions changed from raw": 663
+    }
+  ],
+  "overall_metrics": [
+    {
+      "index": "All original rows",
+      "tweets": 14640.0,
+      "accuracy": 0.5428961748633879,
+      "balanced accuracy": 0.5987277834636943,
+      "macro F1": 0.5103117110811023,
+      "Cohen kappa": 0.3127408384343354,
+      "always-negative baseline": 0.6269125683060109
+    },
+    {
+      "index": "Unique tweets (main analysis)",
+      "tweets": 14485.0,
+      "accuracy": 0.5430445288229203,
+      "balanced accuracy": 0.5993067146015387,
+      "macro F1": 0.5106082272493624,
+      "Cohen kappa": 0.31308758656706226,
+      "always-negative baseline": 0.6270624784259579
+    }
+  ],
+  "class_metrics": [
+    {
+      "index": "negative",
+      "precision": 0.89814999005371,
+      "recall": 0.4970824617417153,
+      "f1-score": 0.6399716513111269,
+      "support": 9083.0
+    },
+    {
+      "index": "neutral",
+      "precision": 0.38569753810082064,
+      "recall": 0.42894393741851367,
+      "f1-score": 0.40617283950617283,
+      "support": 3068.0
+    },
+    {
+      "index": "positive",
+      "precision": 0.33658617267614954,
+      "recall": 0.8718937446443873,
+      "f1-score": 0.48568019093078757,
+      "support": 2334.0
+    },
+    {
+      "index": "accuracy",
+      "precision": 0.5430445288229203,
+      "recall": 0.5430445288229203,
+      "f1-score": 0.5430445288229203,
+      "support": 0.5430445288229203
+    },
+    {
+      "index": "macro avg",
+      "precision": 0.54014456694356,
+      "recall": 0.5993067146015387,
+      "f1-score": 0.5106082272493624,
+      "support": 14485.0
+    },
+    {
+      "index": "weighted avg",
+      "precision": 0.6991238200605661,
+      "recall": 0.5430445288229203,
+      "f1-score": 0.565590496796435,
+      "support": 14485.0
+    }
+  ],
+  "constructed": [
+    {
+      "index": 0,
+      "failure mechanism": "Sarcasm",
+      "text": "Wonderful, another cancelled flight. Just what I wanted!",
+      "intended sentiment": "negative",
+      "uncontextualized lexicon sum": 1.7000000000000002,
+      "VADER compound": 0.4574,
+      "VADER label": "positive",
+      "VADER matches intended": false
+    },
+    {
+      "index": 1,
+      "failure mechanism": "Domain meaning",
+      "text": "My suitcase never arrived at the destination.",
+      "intended sentiment": "negative",
+      "uncontextualized lexicon sum": 0.0,
+      "VADER compound": 0.0,
+      "VADER label": "neutral",
+      "VADER matches intended": false
+    },
+    {
+      "index": 2,
+      "failure mechanism": "Mixed feelings / urgency",
+      "text": "The crew was lovely and kind, but I am still stranded overnight.",
+      "intended sentiment": "negative",
+      "uncontextualized lexicon sum": 5.199999999999999,
+      "VADER compound": 0.5574,
+      "VADER label": "positive",
+      "VADER matches intended": false
+    }
+  ],
+  "confidence_metrics": [
+    {
+      "index": "All unique tweets",
+      "tweets": 14485.0,
+      "accuracy": 0.5430445288229203,
+      "balanced accuracy": 0.5993067146015387,
+      "macro F1": 0.5106082272493624,
+      "Cohen kappa": 0.31308758656706226,
+      "always-negative baseline": 0.6270624784259579
+    },
+    {
+      "index": "Confidence >= 0.90",
+      "tweets": 10374.0,
+      "accuracy": 0.5858877964141121,
+      "balanced accuracy": 0.6458538447686223,
+      "macro F1": 0.5286497205784082,
+      "Cohen kappa": 0.339773376932352,
+      "always-negative baseline": 0.7062849431270484
+    },
+    {
+      "index": "Confidence < 0.90",
+      "tweets": 4111.0,
+      "accuracy": 0.4349306738019946,
+      "balanced accuracy": 0.4947091168856188,
+      "macro F1": 0.4345382820706567,
+      "Cohen kappa": 0.19612401228004717,
+      "always-negative baseline": 0.42714667963999026
+    }
+  ],
+  "reason_shares": [
+    {
+      "airline": "American",
+      "Bad Flight": 4.289544235924933,
+      "Can't Tell": 10.080428954423592,
+      "Cancelled Flight": 12.27882037533512,
+      "Customer Service Issue": 39.62466487935657,
+      "Damaged Luggage": 0.5898123324396782,
+      "Flight Attendant Complaints": 4.343163538873995,
+      "Flight Booking Problems": 6.648793565683646,
+      "Late Flight": 12.707774798927614,
+      "Lost Luggage": 7.72117962466488,
+      "longlines": 1.7158176943699734
+    },
+    {
+      "airline": "Delta",
+      "Bad Flight": 6.701570680628273,
+      "Can't Tell": 19.476439790575917,
+      "Cancelled Flight": 5.340314136125655,
+      "Customer Service Issue": 20.837696335078533,
+      "Damaged Luggage": 1.1518324607329842,
+      "Flight Attendant Complaints": 6.282722513089005,
+      "Flight Booking Problems": 4.607329842931937,
+      "Late Flight": 28.167539267015705,
+      "Lost Luggage": 5.968586387434556,
+      "longlines": 1.4659685863874345
+    },
+    {
+      "airline": "Southwest",
+      "Bad Flight": 7.588532883642496,
+      "Can't Tell": 13.406408094435077,
+      "Cancelled Flight": 13.659359190556492,
+      "Customer Service Issue": 32.96795952782462,
+      "Damaged Luggage": 1.1804384485666104,
+      "Flight Attendant Complaints": 3.204047217537943,
+      "Flight Booking Problems": 5.143338954468803,
+      "Late Flight": 12.816188870151771,
+      "Lost Luggage": 7.588532883642496,
+      "longlines": 2.4451939291736933
+    },
+    {
+      "airline": "US Airways",
+      "Bad Flight": 4.595669465311533,
+      "Can't Tell": 10.870525850640743,
+      "Cancelled Flight": 8.35174547061423,
+      "Customer Service Issue": 35.83738400353513,
+      "Damaged Luggage": 0.4860804242156429,
+      "Flight Attendant Complaints": 5.435262925320371,
+      "Flight Booking Problems": 5.391073795846222,
+      "Late Flight": 20.01767565178966,
+      "Lost Luggage": 6.805125939019001,
+      "longlines": 2.209456473707468
+    },
+    {
+      "airline": "United",
+      "Bad Flight": 8.203570072161034,
+      "Can't Tell": 14.394227117356628,
+      "Cancelled Flight": 6.874287884542348,
+      "Customer Service Issue": 25.864033421952147,
+      "Damaged Luggage": 0.8355488036460311,
+      "Flight Attendant Complaints": 6.380554500569692,
+      "Flight Booking Problems": 5.469046714774022,
+      "Late Flight": 19.939232814280288,
+      "Lost Luggage": 10.216483099126473,
+      "longlines": 1.8230155715913405
+    },
+    {
+      "airline": "Virgin America",
+      "Bad Flight": 10.497237569060774,
+      "Can't Tell": 12.154696132596685,
+      "Cancelled Flight": 9.94475138121547,
+      "Customer Service Issue": 33.14917127071823,
+      "Damaged Luggage": 2.209944751381215,
+      "Flight Attendant Complaints": 2.7624309392265194,
+      "Flight Booking Problems": 15.469613259668508,
+      "Late Flight": 9.392265193370166,
+      "Lost Luggage": 2.7624309392265194,
+      "longlines": 1.6574585635359116
+    }
+  ],
+  "family_shares": [
+    {
+      "airline": "American",
+      "Customer service": 39.62466487935657,
+      "Operations": 33.29758713136729,
+      "Other / unclear": 27.07774798927614
+    },
+    {
+      "airline": "Delta",
+      "Customer service": 20.837696335078533,
+      "Operations": 40.6282722513089,
+      "Other / unclear": 38.53403141361256
+    },
+    {
+      "airline": "Southwest",
+      "Customer service": 32.96795952782462,
+      "Operations": 35.24451939291737,
+      "Other / unclear": 31.787521079258006
+    },
+    {
+      "airline": "US Airways",
+      "Customer service": 35.83738400353513,
+      "Operations": 35.660627485638535,
+      "Other / unclear": 28.501988510826337
+    },
+    {
+      "airline": "United",
+      "Customer service": 25.864033421952147,
+      "Operations": 37.865552601595134,
+      "Other / unclear": 36.270413976452716
+    },
+    {
+      "airline": "Virgin America",
+      "Customer service": 33.14917127071823,
+      "Operations": 24.30939226519337,
+      "Other / unclear": 42.5414364640884
+    }
+  ],
+  "reliable_family_shares": [
+    {
+      "airline": "American",
+      "Customer service": 51.470588235294116,
+      "Operations": 36.898395721925134,
+      "Other / unclear": 11.631016042780749
+    },
+    {
+      "airline": "Delta",
+      "Customer service": 20.80745341614907,
+      "Operations": 56.83229813664597,
+      "Other / unclear": 22.36024844720497
+    },
+    {
+      "airline": "Southwest",
+      "Customer service": 39.63963963963964,
+      "Operations": 45.94594594594595,
+      "Other / unclear": 14.414414414414415
+    },
+    {
+      "airline": "US Airways",
+      "Customer service": 43.609022556390975,
+      "Operations": 40.38668098818475,
+      "Other / unclear": 16.004296455424274
+    },
+    {
+      "airline": "United",
+      "Customer service": 28.272827282728276,
+      "Operations": 53.24532453245324,
+      "Other / unclear": 18.48184818481848
+    },
+    {
+      "airline": "Virgin America",
+      "Customer service": 36.206896551724135,
+      "Operations": 32.758620689655174,
+      "Other / unclear": 31.03448275862069
+    }
+  ],
+  "airline_summary": [
+    {
+      "airline": "American",
+      "total tweets": 2604,
+      "negative count": 1865,
+      "negative share (%)": 71.62058371735792,
+      "count rank": 3,
+      "share rank": 2
+    },
+    {
+      "airline": "Delta",
+      "total tweets": 2222,
+      "negative count": 955,
+      "negative share (%)": 42.97929792979298,
+      "count rank": 5,
+      "share rank": 5
+    },
+    {
+      "airline": "Southwest",
+      "total tweets": 2420,
+      "negative count": 1186,
+      "negative share (%)": 49.00826446280992,
+      "count rank": 4,
+      "share rank": 4
+    },
+    {
+      "airline": "US Airways",
+      "total tweets": 2913,
+      "negative count": 2263,
+      "negative share (%)": 77.68623412289736,
+      "count rank": 2,
+      "share rank": 1
+    },
+    {
+      "airline": "United",
+      "total tweets": 3822,
+      "negative count": 2633,
+      "negative share (%)": 68.89063317634746,
+      "count rank": 1,
+      "share rank": 3
+    },
+    {
+      "airline": "Virgin America",
+      "total tweets": 504,
+      "negative count": 181,
+      "negative share (%)": 35.91269841269841,
+      "count rank": 6,
+      "share rank": 6
+    }
+  ],
+  "daily": [
+    {
+      "day_utc": "2015-02-17 00:00:00+00:00",
+      "total": 953,
+      "negative": 552,
+      "negative share (%)": 57.922350472193074,
+      "boundary day (partial coverage)": true
+    },
+    {
+      "day_utc": "2015-02-18 00:00:00+00:00",
+      "total": 1416,
+      "negative": 827,
+      "negative share (%)": 58.40395480225988,
+      "boundary day (partial coverage)": false
+    },
+    {
+      "day_utc": "2015-02-19 00:00:00+00:00",
+      "total": 1298,
+      "negative": 666,
+      "negative share (%)": 51.30970724191063,
+      "boundary day (partial coverage)": false
+    },
+    {
+      "day_utc": "2015-02-20 00:00:00+00:00",
+      "total": 1512,
+      "negative": 849,
+      "negative share (%)": 56.15079365079365,
+      "boundary day (partial coverage)": false
+    },
+    {
+      "day_utc": "2015-02-21 00:00:00+00:00",
+      "total": 1418,
+      "negative": 901,
+      "negative share (%)": 63.540197461212976,
+      "boundary day (partial coverage)": false
+    },
+    {
+      "day_utc": "2015-02-22 00:00:00+00:00",
+      "total": 2388,
+      "negative": 1741,
+      "negative share (%)": 72.90619765494138,
+      "boundary day (partial coverage)": false
+    },
+    {
+      "day_utc": "2015-02-23 00:00:00+00:00",
+      "total": 3511,
+      "negative": 2342,
+      "negative share (%)": 66.7046425519795,
+      "boundary day (partial coverage)": false
+    },
+    {
+      "day_utc": "2015-02-24 00:00:00+00:00",
+      "total": 1989,
+      "negative": 1205,
+      "negative share (%)": 60.58320764203117,
+      "boundary day (partial coverage)": true
+    }
+  ],
+  "user_sensitivity": [
+    {
+      "airline": "American",
+      "All unique tweets: negative %": 71.62058371735792,
+      "First tweet per handle-airline: negative %": 69.34865900383141,
+      "change (percentage points)": -2.271924713526502
+    },
+    {
+      "airline": "Delta",
+      "All unique tweets: negative %": 42.97929792979298,
+      "First tweet per handle-airline: negative %": 39.436619718309856,
+      "change (percentage points)": -3.5426782114831212
+    },
+    {
+      "airline": "Southwest",
+      "All unique tweets: negative %": 49.00826446280992,
+      "First tweet per handle-airline: negative %": 47.903822441430336,
+      "change (percentage points)": -1.1044420213795831
+    },
+    {
+      "airline": "US Airways",
+      "All unique tweets: negative %": 77.68623412289736,
+      "First tweet per handle-airline: negative %": 77.59674134419552,
+      "change (percentage points)": -0.08949277870183892
+    },
+    {
+      "airline": "United",
+      "All unique tweets: negative %": 68.89063317634746,
+      "First tweet per handle-airline: negative %": 68.32579185520362,
+      "change (percentage points)": -0.5648413211438452
+    },
+    {
+      "airline": "Virgin America",
+      "All unique tweets: negative %": 35.91269841269841,
+      "First tweet per handle-airline: negative %": 35.025380710659896,
+      "change (percentage points)": -0.8873177020385157
+    }
+  ],
+  "artifact_summary": [
+    {
+      "index": "Flightled",
+      "matching tweets": 491,
+      "share of unique tweets (%)": 3.3897134967207454
+    },
+    {
+      "index": "Cancelled Flight",
+      "matching tweets": 999,
+      "share of unique tweets (%)": 6.896789782533655
+    },
+    {
+      "index": "Late Flight",
+      "matching tweets": 447,
+      "share of unique tweets (%)": 3.0859509837763204
+    }
+  ],
+  "amplification": [
+    {
+      "airline_sentiment": "negative",
+      "tweets": 9083,
+      "retweeted_tweets": 595,
+      "total_recorded_retweets": 855,
+      "median_retweets": 0.0,
+      "retweeted share (%)": 6.550699108224155
+    },
+    {
+      "airline_sentiment": "neutral",
+      "tweets": 3068,
+      "retweeted_tweets": 94,
+      "total_recorded_retweets": 189,
+      "median_retweets": 0.0,
+      "retweeted share (%)": 3.0638852672750976
+    },
+    {
+      "airline_sentiment": "positive",
+      "tweets": 2334,
+      "retweeted_tweets": 76,
+      "total_recorded_retweets": 164,
+      "median_retweets": 0.0,
+      "retweeted share (%)": 3.2562125107112254
+    }
+  ],
+  "operational_evidence": [
+    {
+      "index": 0,
+      "problem phrase": "Cancelled flight",
+      "negative tweets matching": 295,
+      "example": "@VirginAmerica I have no interesting flying with you after this. I will Cancelled Flight my next four flights I planned.#neverflyvirginforbusiness"
+    },
+    {
+      "index": 1,
+      "problem phrase": "Lost luggage",
+      "negative tweets matching": 69,
+      "example": "@VirginAmerica everything was fine until you lost my bag"
+    },
+    {
+      "index": 2,
+      "problem phrase": "On hold",
+      "negative tweets matching": 484,
+      "example": "@VirginAmerica Hi, Virgin! I'm on hold for 40-50 minutes -- are there any earlier flights from LA to NYC tonight; earlier than 11:50pm?"
+    }
+  ],
+  "decision_evidence": [
+    {
+      "index": "Unique tweets",
+      "0": 14485.0
+    },
+    {
+      "index": "VADER agrees with human",
+      "0": 7866.0
+    },
+    {
+      "index": "Human-negative tweets missed",
+      "0": 4568.0
+    },
+    {
+      "index": "Human-negative tweets missed (%)",
+      "0": 50.29175382582847
+    },
+    {
+      "index": "VADER macro F1",
+      "0": 0.5106082272493624
+    }
+  ],
+  "bias_evidence": [
+    {
+      "index": "Negative share of unique tweets (%)",
+      "Evidence": 62.706247842595786
+    },
+    {
+      "index": "Largest airline / smallest airline sample ratio",
+      "Evidence": 7.583333333333333
+    },
+    {
+      "index": "Tweets from handles posting more than once (%)",
+      "Evidence": 67.19364860200207
+    },
+    {
+      "index": "Missing tweet_coord (%)",
+      "Evidence": 93.04798066965827
+    },
+    {
+      "index": "Missing tweet_location (%)",
+      "Evidence": 32.3576113220573
+    },
+    {
+      "index": "Missing user_timezone (%)",
+      "Evidence": 32.96513634794615
+    }
+  ],
+  "negative_distinctive": [
+    {
+      "index": "flight",
+      "negative": 0.05462900369574343,
+      "positive": 0.028828004777094584,
+      "negative minus positive": 0.025800998918648847
+    },
+    {
+      "index": "hour",
+      "negative": 0.026700291008047432,
+      "positive": 0.0018684183501030906,
+      "negative minus positive": 0.024831872657944343
+    },
+    {
+      "index": "not",
+      "negative": 0.028640663889902062,
+      "positive": 0.006360009852146175,
+      "negative minus positive": 0.022280654037755886
+    },
+    {
+      "index": "no",
+      "negative": 0.027674167536674135,
+      "positive": 0.006000941227671653,
+      "negative minus positive": 0.02167322630900248
+    },
+    {
+      "index": "hold",
+      "negative": 0.019325033637330638,
+      "positive": 0.001436092924362625,
+      "negative minus positive": 0.017888940712968013
+    },
+    {
+      "index": "cancel",
+      "negative": 0.020524295463107675,
+      "positive": 0.002773671156566728,
+      "negative minus positive": 0.01775062430654095
+    },
+    {
+      "index": "delay",
+      "negative": 0.021196966946875687,
+      "positive": 0.003935306347147457,
+      "negative minus positive": 0.01726166059972823
+    },
+    {
+      "index": "call",
+      "negative": 0.01808751577995115,
+      "positive": 0.003916722032525525,
+      "negative minus positive": 0.014170793747425626
+    },
+    {
+      "index": "bag",
+      "negative": 0.01665156573221655,
+      "positive": 0.004760014170535408,
+      "negative minus positive": 0.011891551561681143
+    },
+    {
+      "index": "wait",
+      "negative": 0.017627621784192606,
+      "positive": 0.005959623267268951,
+      "negative minus positive": 0.011667998516923656
+    },
+    {
+      "index": "bad",
+      "negative": 0.013226432727278364,
+      "positive": 0.0017604362905617463,
+      "negative minus positive": 0.011465996436716617
+    },
+    {
+      "index": "need",
+      "negative": 0.013518867354812452,
+      "positive": 0.002794296305219894,
+      "negative minus positive": 0.010724571049592558
+    }
+  ],
+  "positive_distinctive": [
+    {
+      "index": "thank",
+      "negative": 0.002418605052238815,
+      "positive": 0.08992231526712115,
+      "negative minus positive": -0.08750371021488233
+    },
+    {
+      "index": "thanks",
+      "negative": 0.007508759089367414,
+      "positive": 0.09122328696845877,
+      "negative minus positive": -0.08371452787909135
+    },
+    {
+      "index": "great",
+      "negative": 0.0025906358137056267,
+      "positive": 0.036187773323716664,
+      "negative minus positive": -0.03359713751001104
+    },
+    {
+      "index": "love",
+      "negative": 0.0023026010487806584,
+      "positive": 0.025087940967365382,
+      "negative minus positive": -0.022785339918584724
+    },
+    {
+      "index": "awesome",
+      "negative": 0.0006253932110428217,
+      "positive": 0.018764880712234935,
+      "negative minus positive": -0.018139487501192115
+    },
+    {
+      "index": "best",
+      "negative": 0.002211351612529474,
+      "positive": 0.018579137164752922,
+      "negative minus positive": -0.016367785552223447
+    },
+    {
+      "index": "much",
+      "negative": 0.0031355868199858463,
+      "positive": 0.019232420508003018,
+      "negative minus positive": -0.016096833688017172
+    },
+    {
+      "index": "appreciate",
+      "negative": 0.0020984983491457044,
+      "positive": 0.014767499871641027,
+      "negative minus positive": -0.012669001522495322
+    },
+    {
+      "index": "good",
+      "negative": 0.0071748380621193385,
+      "positive": 0.018323890845085115,
+      "negative minus positive": -0.011149052782965777
+    },
+    {
+      "index": "guy",
+      "negative": 0.00785592035256669,
+      "positive": 0.01732995417415758,
+      "negative minus positive": -0.009474033821590889
+    },
+    {
+      "index": "follow",
+      "negative": 0.002150344706043995,
+      "positive": 0.011402238217331977,
+      "negative minus positive": -0.009251893511287981
+    },
+    {
+      "index": "amaze",
+      "negative": 0.0005468207436689894,
+      "positive": 0.009322272297394919,
+      "negative minus positive": -0.00877545155372593
+    }
+  ],
+  "feature_table": [
+    {
+      "index": 0,
+      "feature": "Handle",
+      "tweets containing feature": 14485,
+      "example": "@VirginAmerica What @dhepburn said.",
+      "naive regex tokens": [
+        "VirginAmerica",
+        "What",
+        "dhepburn",
+        "said"
+      ],
+      "tweet-aware tokens": [
+        "@VirginAmerica",
+        "What",
+        "@dhepburn",
+        "said",
+        "."
+      ]
+    },
+    {
+      "index": 1,
+      "feature": "Hashtag",
+      "tweets containing feature": 2351,
+      "example": "@VirginAmerica @virginmedia I'm flying your #fabulous #Seductive skies again! U take all the #stress away from travel http://t.co/ahlXHhKiyn",
+      "naive regex tokens": [
+        "VirginAmerica",
+        "virginmedia",
+        "I",
+        "m",
+        "flying",
+        "your",
+        "fabulous",
+        "Seductive",
+        "skies",
+        "again",
+        "U",
+        "take",
+        "all",
+        "the",
+        "stress",
+        "away",
+        "from",
+        "travel",
+        "http",
+        "t",
+        "co",
+        "ahlXHhKiyn"
+      ],
+      "tweet-aware tokens": [
+        "@VirginAmerica",
+        "@virginmedia",
+        "I'm",
+        "flying",
+        "your",
+        "#fabulous",
+        "#Seductive",
+        "skies",
+        "again",
+        "!",
+        "U",
+        "take",
+        "all",
+        "the",
+        "#stress",
+        "away",
+        "from",
+        "travel",
+        "http://t.co/ahlXHhKiyn"
+      ]
+    },
+    {
+      "index": 2,
+      "feature": "URL",
+      "tweets containing feature": 1163,
+      "example": "@VirginAmerica Really missed a prime opportunity for Men Without Hats parody, there. https://t.co/mWpG7grEZP",
+      "naive regex tokens": [
+        "VirginAmerica",
+        "Really",
+        "missed",
+        "a",
+        "prime",
+        "opportunity",
+        "for",
+        "Men",
+        "Without",
+        "Hats",
+        "parody",
+        "there",
+        "https",
+        "t",
+        "co",
+        "mWpG7grEZP"
+      ],
+      "tweet-aware tokens": [
+        "@VirginAmerica",
+        "Really",
+        "missed",
+        "a",
+        "prime",
+        "opportunity",
+        "for",
+        "Men",
+        "Without",
+        "Hats",
+        "parody",
+        ",",
+        "there",
+        ".",
+        "https://t.co/mWpG7grEZP"
+      ]
+    },
+    {
+      "index": 3,
+      "feature": "Emoji / emoticon",
+      "tweets containing feature": 761,
+      "example": "@VirginAmerica yes, nearly every time I fly VX this \u201cear worm\u201d won\u2019t go away :)",
+      "naive regex tokens": [
+        "VirginAmerica",
+        "yes",
+        "nearly",
+        "every",
+        "time",
+        "I",
+        "fly",
+        "VX",
+        "this",
+        "ear",
+        "worm",
+        "won",
+        "t",
+        "go",
+        "away"
+      ],
+      "tweet-aware tokens": [
+        "@VirginAmerica",
+        "yes",
+        ",",
+        "nearly",
+        "every",
+        "time",
+        "I",
+        "fly",
+        "VX",
+        "this",
+        "\u201c",
+        "ear",
+        "worm",
+        "\u201d",
+        "won",
+        "\u2019",
+        "t",
+        "go",
+        "away",
+        ":)"
+      ]
+    },
+    {
+      "index": 4,
+      "feature": "Stretched word",
+      "tweets containing feature": 117,
+      "example": "@VirginAmerica I love this graphic. http://t.co/UT5GrRwAaA",
+      "naive regex tokens": [
+        "VirginAmerica",
+        "I",
+        "love",
+        "this",
+        "graphic",
+        "http",
+        "t",
+        "co",
+        "UT5GrRwAaA"
+      ],
+      "tweet-aware tokens": [
+        "@VirginAmerica",
+        "I",
+        "love",
+        "this",
+        "graphic",
+        ".",
+        "http://t.co/UT5GrRwAaA"
+      ]
+    }
+  ],
+  "cause_counts": [
+    {
+      "cause": "Sarcasm",
+      "count": 13
+    },
+    {
+      "cause": "Mixed feelings / positive politeness",
+      "count": 11
+    },
+    {
+      "cause": "Domain / implicit disruption",
+      "count": 6
+    },
+    {
+      "cause": "Context / uncertain label",
+      "count": 4
+    },
+    {
+      "cause": "Negation / informal spelling",
+      "count": 3
+    },
+    {
+      "cause": "Airline-target mismatch",
+      "count": 3
+    }
+  ],
+  "scalars": {
+    "unique_tweets": 14485,
+    "positive_tweets": "2334",
+    "negative_tweets": 9083,
+    "repeat_negative_share": 65.48497192557525,
+    "peak_day": "2015-02-23 00:00:00+00:00",
+    "peak_share_day": "2015-02-22 00:00:00+00:00",
+    "priority_tiers": {
+      "3": 5599,
+      "2": 3145,
+      "1": 339
+    },
+    "first": "2015-02-17 07:36:05+00:00",
+    "last": "2015-02-24 19:53:37+00:00"
+  }
+}
