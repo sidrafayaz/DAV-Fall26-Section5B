@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAST-NUCES Islamabad | Lab 10: Time Series Visualization in D3.js</title>
+    <!-- D3.js v7 CDN -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+/* ===================================================================
+   FAST-NUCES Islamabad — Data Analysis & Visualization (DAV)
+   Lab 10: Time Series Visualization with D3.js
+   Author: i242548_DSB
+   =================================================================== */
+
+:root {
+    --bg-page: #f8fafc;
+    --bg-card: #ffffff;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+    --border-color: #e2e8f0;
+    --brand-primary: #2563eb;
+    --brand-primary-hover: #1d4ed8;
+    --color-city: #dc2626;
+    --color-suburb: #0284c7;
+    --color-ma: #1e293b;
+    --color-ref15: #16a34a;
+    --color-ref75: #ea580c;
+    --color-low: #10b981;
+    --color-moderate: #f59e0b;
+    --color-high: #f97316;
+    --color-severe: #b91c1c;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.08), 0 2px 4px -2px rgba(0,0,0,0.04);
+    --radius-sm: 6px;
+    --radius-md: 10px;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: var(--bg-page);
+    color: var(--text-primary);
+    line-height: 1.6;
+    padding: 24px 20px 60px 20px;
+}
+
+.container {
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+/* Header & Meta */
+header.lab-header {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: #ffffff;
+    padding: 32px 36px;
+    border-radius: var(--radius-md);
+    margin-bottom: 28px;
+    box-shadow: var(--shadow-md);
+}
+
+header.lab-header h1 {
+    font-size: 1.85rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    letter-spacing: -0.02em;
+}
+
+header.lab-header .subtitle {
+    font-size: 1.05rem;
+    color: #cbd5e1;
+    margin-bottom: 16px;
+}
+
+.meta-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px 28px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    font-size: 0.88rem;
+    color: #94a3b8;
+}
+
+.meta-item strong {
+    color: #f1f5f9;
+}
+
+/* Navigation quick links */
+.nav-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    background: #ffffff;
+    padding: 12px 18px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+    margin-bottom: 28px;
+    box-shadow: var(--shadow-sm);
+    position: sticky;
+    top: 12px;
+    z-index: 50;
+}
+
+.nav-bar a {
+    text-decoration: none;
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 4px;
+    background: #f1f5f9;
+    transition: all 0.15s ease;
+}
+
+.nav-bar a:hover {
+    background: var(--brand-primary);
+    color: #ffffff;
+}
+
+/* Card Container */
+.task-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 26px 28px;
+    margin-bottom: 32px;
+    box-shadow: var(--shadow-sm);
+    transition: border-color 0.2s ease;
+}
+
+.task-card:hover {
+    border-color: #cbd5e1;
+}
+
+.task-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.task-title {
+    font-size: 1.28rem;
+    font-weight: 700;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.task-badge {
+    background: #e0f2fe;
+    color: #0369a1;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.04em;
+}
+
+.task-question {
+    font-size: 0.96rem;
+    color: var(--text-secondary);
+    font-style: italic;
+    margin-bottom: 12px;
+}
+
+/* Metric / Stat Bars */
+.stat-banner {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    background: #f8fafc;
+    border-left: 4px solid var(--brand-primary);
+    padding: 12px 18px;
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    margin-bottom: 18px;
+    font-size: 0.9rem;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.stat-label {
+    color: var(--text-muted);
+}
+
+.stat-val {
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.stat-val.alert-red {
+    color: #dc2626;
+}
+
+.stat-val.alert-green {
+    color: #16a34a;
+}
+
+.stat-val.alert-amber {
+    color: #d97706;
+}
+
+/* Chart Canvas Area */
+.chart-wrapper {
+    position: relative;
+    background: #ffffff;
+    border: 1px solid #f1f5f9;
+    border-radius: var(--radius-sm);
+    padding: 10px 4px;
+    overflow-x: auto;
+}
+
+svg {
+    display: block;
+    font-family: inherit;
+}
+
+/* D3 SVG Axis and Styling */
+.axis text {
+    fill: #475569;
+    font-size: 11px;
+}
+
+.axis path,
+.axis line {
+    stroke: #cbd5e1;
+}
+
+.grid-line {
+    stroke: #f1f5f9;
+    stroke-dasharray: 2 2;
+}
+
+.ref-line {
+    stroke-dasharray: 4 4;
+    stroke-width: 1.5px;
+}
+
+.ref-label {
+    font-size: 11px;
+    font-weight: 600;
+}
+
+/* Tooltip */
+.tooltip {
+    position: absolute;
+    background: rgba(15, 23, 42, 0.94);
+    color: #ffffff;
+    padding: 10px 14px;
+    border-radius: 6px;
+    pointer-events: none;
+    opacity: 0;
+    font-size: 12px;
+    line-height: 1.45;
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.25);
+    z-index: 1000;
+    transition: opacity 0.15s ease;
+    max-width: 280px;
+}
+
+.tooltip strong {
+    color: #38bdf8;
+}
+
+.tooltip .sub-val {
+    color: #e2e8f0;
+}
+
+/* Controls & Buttons */
+.controls-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.btn-ctrl {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: #334155;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-ctrl:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+}
+
+.btn-ctrl.btn-primary {
+    background: var(--brand-primary);
+    color: #ffffff;
+    border-color: var(--brand-primary);
+}
+
+.btn-ctrl.btn-primary:hover {
+    background: var(--brand-primary-hover);
+}
+
+/* Notes & Observations */
+.task-notes {
+    margin-top: 18px;
+    background: #f8fafc;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 14px 18px;
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+}
+
+.task-notes strong {
+    color: var(--text-primary);
+}
+
+/* Audit Table (Task 1) */
+.audit-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    font-size: 0.88rem;
+}
+
+.audit-table th,
+.audit-table td {
+    padding: 10px 14px;
+    text-align: left;
+    border: 1px solid var(--border-color);
+}
+
+.audit-table th {
+    background: #f1f5f9;
+    color: #1e293b;
+    font-weight: 600;
+}
+
+.audit-table tr:nth-child(even) {
+    background: #f8fafc;
+}
+
+.badge-status {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.badge-status.pass {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.badge-status.warn {
+    background: #fef3c7;
+    color: #b45309;
+}
+
+.badge-status.fail {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+/* Heatmap Legend */
+.heatmap-legend-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 14px;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+}
+
+/* Questions Section */
+.director-section {
+    background: #ffffff;
+    border: 2px solid #3b82f6;
+    border-radius: var(--radius-md);
+    padding: 32px 34px;
+    margin-top: 40px;
+    box-shadow: var(--shadow-md);
+}
+
+.director-title {
+    font-size: 1.55rem;
+    color: #0f172a;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.director-subtitle {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    margin-bottom: 24px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.qa-card {
+    background: #f8fafc;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 16px 20px;
+    margin-bottom: 16px;
+}
+
+.qa-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 8px;
+}
+
+.qa-q {
+    font-weight: 700;
+    color: #1e293b;
+    font-size: 0.96rem;
+}
+
+.qa-tag {
+    background: #e2e8f0;
+    color: #334155;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+.qa-a {
+    font-size: 0.9rem;
+    color: #334155;
+    line-height: 1.55;
+}
+
+.qa-a strong {
+    color: #0f172a;
+}
+
+.highlight-box {
+    background: #eff6ff;
+    border-left: 4px solid var(--brand-primary);
+    padding: 10px 14px;
+    border-radius: 0 4px 4px 0;
+    margin-top: 8px;
+    font-size: 0.88rem;
+    color: #1e40af;
+}
+
+/* Legend items general */
+.chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 18px;
+    margin-top: 12px;
+    padding: 8px 12px;
+    background: #f8fafc;
+    border-radius: 6px;
+    font-size: 0.82rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.legend-color-box {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+}
+
+.legend-color-line {
+    width: 20px;
+    height: 3px;
+    border-radius: 1px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    body {
+        padding: 14px 10px 40px 10px;
+    }
+    .task-card {
+        padding: 18px 16px;
+    }
+    header.lab-header {
+        padding: 22px 20px;
+    }
+}
+
+
+    </style>
+</head>
+<body>
+
+    <div id="tooltip" class="tooltip"></div>
+
+    <div class="container">
+        
+        <!-- Header -->
+        <header class="lab-header">
+            <h1>National University of Computer and Emerging Sciences (FAST-NUCES)</h1>
+            <div class="subtitle">Data Analysis & Visualization (CS-3005) — Lab Manual 10: Time Series Visualizations</div>
+            <div class="meta-grid">
+                <div class="meta-item">Student: <strong>i242548</strong></div>
+                <div class="meta-item">Section: <strong>DSB</strong></div>
+                <div class="meta-item">Dataset: <strong>air_quality_2025.csv</strong></div>
+                <div class="meta-item">Tool: <strong>D3.js v7 (scaleTime, line, area, stack, bisector, brush)</strong></div>
+            </div>
+        </header>
+
+        <!-- Navigation Bar -->
+        <nav class="nav-bar">
+            <a href="#task1">Task 1: Audit</a>
+            <a href="#task2">Task 2: City PM2.5</a>
+            <a href="#task3">Task 3: Running Total</a>
+            <a href="#task4">Task 4: City vs Suburb</a>
+            <a href="#task5">Task 5: Monthly Levels</a>
+            <a href="#task6">Task 6: Heatmap</a>
+            <a href="#task7">Task 7: Monthly Spread</a>
+            <a href="#task8">Task 8: Moving Avg & Gap</a>
+            <a href="#task9">Task 9: Brush & Zoom</a>
+            <a href="#director-briefing" style="background:#2563eb;color:#fff;">Executive Briefing (12 Q&amp;A)</a>
+        </nav>
+
+        <!-- TASK 1 -->
+        <section class="task-card" id="task1">
+            <div class="task-header">
+                <div class="task-title">
+                    <span>Task 1: Time Series Data Audit & Integrity Check</span>
+                    <span class="task-badge">Data Preparation</span>
+                </div>
+            </div>
+            <div class="task-question">
+                "Count the rows and find the first and last dates. Compare the row count with the number of days in 2025. Write down what you notice."
+            </div>
+
+            <div class="stat-banner">
+                <div class="stat-item"><span class="stat-label">Total Rows Recorded:</span> <span class="stat-val">356</span></div>
+                <div class="stat-item"><span class="stat-label">Expected Days in 2025:</span> <span class="stat-val">365</span></div>
+                <div class="stat-item"><span class="stat-label">Sensor Completeness:</span> <span class="stat-val alert-amber">97.53%</span></div>
+                <div class="stat-item"><span class="stat-label">Missing Duration:</span> <span class="stat-val alert-red">9 Days Missing</span></div>
+            </div>
+
+            <div id="task1-audit-table"></div>
+
+            <div class="task-notes">
+                <strong>Key Observations:</strong>
+                <p>• The dataset spans from <strong>January 1, 2025 (2025-01-01)</strong> to <strong>December 31, 2025 (2025-12-31)</strong>. While the bounding dates cover the full calendar year, the recorded count is <strong>356 rows</strong> instead of the 365 days in 2025 (a non-leap year).</p>
+                <p>• Cross-referencing against an unbroken calendar reveals exactly <strong>9 consecutive missing dates</strong> from <strong>March 12, 2025 to March 20, 2025</strong>. This signifies a prolonged hardware malfunction or communication outage at the monitoring station.</p>
+                <p>• In time-series analysis, time is the organizing backbone: treating this as 356 equidistant points without a true time scale (<code>d3.scaleTime</code>) would compress the timeline and distort rate-of-change perceptions.</p>
+            </div>
+        </section>
+
+        <!-- TASK 2 -->
+        <section class="task-card" id="task2">
+            <div class="task-header">
+                <div class="task-title">
+                    <span>Task 2: City Centre PM2.5 Annual Trajectory & Guideline Exceedance</span>
+                    <span class="task-badge">Line Chart</span>
+                </div>
+            </div>
+            <div class="task-question">
+                "Question: how did PM2.5 in the city centre change through the year? Plot daily city PM2.5 as a line against time. Add dashed reference lines at 15 and 75 µg/m³, each labelled. Mark the two highest days with a point and a label showing the date and value. Count the days above 15 and above 75, and show both numbers under the title."
+            </div>
+
+            <div class="stat-banner">
+                <div class="stat-item"><span class="stat-label">Days Above WHO Guideline (15 µg/m³):</span> <span class="stat-val alert-red">355 days (99.72%)</span></div>
+                <div class="stat-item"><span class="stat-label">Days Above Interim Target 1 (75 µg/m³):</span> <span class="stat-val alert-red">188 days (52.81%)</span></div>
+                <div class="stat-item"><span class="stat-label">Annual City Mean:</span> <span class="stat-val">86.35 µg/m³</span></div>
+                <div class="stat-item"><span class="stat-label">Peak Concentration:</span> <span class="stat-val alert-red">320.0 µg/m³ (Nov 8)</span></div>
+            </div>
+
+            <div class="chart-wrapper" id="task2-chart"></div>
+
+            <div class="task-notes">
+                <strong>Analytical Findings:</strong>
+                <p>• <strong>Extreme Non-Compliance:</strong> Out of 356 monitored days, <strong>355 days (99.72%)</strong> exceeded the WHO 24-hour health guideline of 15 µg/m³. Only <em>one single day</em> all year met safe air standards (July 9, 2025 at 11.8 µg/m³).</p>
+                <p>• <strong>Interim Target Breaches:</strong> <strong>188 days (52.81%)</strong> exceeded WHO Interim Target 1 (75 µg/m³), meaning citizens breathed air considered unhealthy for more than half the calendar year.</p>
+                <p>• <strong>Top Two Outliers Marked:</strong></p>
+                <p>&nbsp;&nbsp;&nbsp;&nbsp;1. <strong>November 8, 2025 (320.0 µg/m³):</strong> The highest pollution emergency of the year, driven by autumn temperature inversion and regional biomass burning.</p>
+                <p>&nbsp;&nbsp;&nbsp;&nbsp;2. <strong>May 18, 2025 (245.0 µg/m³):</strong> An isolated, intense spike occurring in late spring, consistent with an extreme convective dust storm.</p>
+            </div>
+        </section>
+
+        <!-- TASK 3 -->
+        <section class="task-card" id="task3">
+            <div class="task-header">
+                <div class="task-title">
+                    <span>Task 3: Cumulative Build-up of Unhealthy Days (>75 µg/m³)</span>
+                    <span class="task-badge">Area Chart</span>
+                </div>
+            </div>
+            <div class="task-question">
+                "Question: how quickly did unhealthy days (above 75 µg/m³) build up during the year? For each day, work out the running total of days so far that were above 75. Plot the running total as a filled area. The last value must match your count from Task 2."
+            </div>
+
+            <div class="stat-banner">
+                <div class="stat-item"><span class="stat-label">Final Cumulative Total:</span> <span class="stat-val alert-red">188 Days (Matches Task 2)</span></div>
+                <div class="stat-item"><span class="stat-label">Fastest Growth Months:</span> <span class="stat-val">Jan (+31), Feb (+28), Nov (+30), Dec (+31)</span></div>
+                <div class="stat-item"><span class="stat-label">Stagnation / Zero Growth:</span> <span class="stat-val alert-green">June (0), July (0), August (0)</span></div>
+            </div>
+
+            <div class="chart-wrapper" id="task3-chart"></div>
+
+            <div class="task-notes">
+                <strong>Build-up Rate Analysis:</strong>
+                <p>• <strong>Winter Acceleration (Jan–March):</strong> The curve rises at a near 1:1 daily slope. By March 31, 80 unhealthy days had accumulated in just 90 calendar days.</p>
+                <p>• <strong>Monsoon Stagnation (May 21 – Sept 17):</strong> The cumulative total remains completely flat at <strong>100 days</strong> throughout June, July, and August. High summer temperatures and monsoon precipitation wash out particulate matter, yielding zero days above 75 µg/m³.</p>
+                <p>• <strong>Autumn Smog Surge (Oct–Dec):</strong> The curve steepens dramatically in mid-October. In November and December, every single day is unhealthy (+61 days added in 61 days), driving the curve from 127 to its final sum of <strong>188 days</strong>.</p>
+            </div>
+        </section>
+
+        <!-- TASK 4 -->
+        <section class="task-card" id="task4">
+            <div class="task-header">
+                <div class="task-title">
+                    <span>Task 4: City Centre vs. Suburb Comparative Analysis</span>
+                    <span class="task-badge">Multi-Line Chart</span>
+                </div>
+            </div>
+            <div class="task-question">
+                "Question: does the suburb behave like the city centre? Plot the city and suburb values as two lines in different colours on the same axes, with a legend."
+            </div>
+
+            <div class="stat-banner">
+                <div class="stat-item"><span class="stat-label">City Centre Mean:</span> <span class="stat-val alert-red">86.35 µg/m³</span></div>
+                <div class="stat-item"><span class="stat-label">Suburb Mean:</span> <span class="stat-val" style="color:#0284c7;">69.17 µg/m³</span></div>
+                <div class="stat-item"><span class="stat-label">Mean Difference (City - Suburb):</span> <span class="stat-val">+17.18 µg/m³</span></div>
+                <div class="stat-item"><span class="stat-label">Peak Divergence:</span> <span class="stat-val">Feb 24 (Δ = 80.5 µg/m³)</span></div>
+            </div>
+
+            <div class="chart-wrapper" id="task4-chart"></div>
+
+            <div class="task-notes">
+                <strong>Comparative Insights:</strong>
+                <p>• <strong>Synchronized Seasonality:</strong> The suburb mirrors the city's seasonal trajectory with near-perfect correlation (r > 0.95). Both stations capture identical seasonal peaks in winter and identical troughs in summer, confirming that macro-meteorological factors govern the airshed.</p>
+                <p>• <strong>Consistent Urban Elevation:</strong> The city centre is consistently more polluted than the suburb, averaging <strong>17.18 µg/m³ higher</strong> over the year. This reflects the dense concentration of vehicular traffic, stop-and-go diesel transit, and urban street canyon entrapment.</p>
+                <p>• <strong>Peak Divergence on Feb 24:</strong> During an intense winter inversion episode on February 24, the city spiked to <strong>237.8 µg/m³</strong> while the suburb recorded <strong>157.3 µg/m³</strong> (a difference of 80.5 µg/m³). The city's dense localized emissions pool more severely under shallow atmospheric boundary layers.</p>
+            </div>
+        </section>
+
+        <!-- TASK 5 -->
+        <section class="task-card" id="task5">
+            <div class="task-header">
+                <div class="task-title">
+                    <span>Task 5: Monthly Pollution Severity Composition</span>
+                    <span class="task-badge">Stacked Bar Chart</span>
+                </div>
+            </div>
+            <div class="task-question">
+                "Question: in each month, how are the days split between pollution levels? Give each day a level: Low (≤35), Moderate (36–75), High (76–150), Severe (>150). Count days per level in each month, and stack the four levels so each month's stack adds up to its number of days. Use light-to-dark colours with a legend. Some months will be shorter than others. Find out why."
+            </div>
+
+            <div class="stat-banner">
+                <div class="stat-item"><span class="stat-label">Month with Most Severe Days:</span> <span class="stat-val alert-red">December (11 Days >150)</span></div>
+                <div class="stat-item"><span class="stat-label">Month with Most Low Days:</span> <span class="stat-val alert-green">July (28 Days ≤35)</span></div>
+                <div class="stat-item"><span class="stat-label">Total Severe Days in Year:</span> <span class="stat-val">37 Days</span></div>
+                <div class="stat-item"><span class="stat-label">Total Low Days in Year:</span> <span class="stat-val">59 Days</span></div>
+            </div>
+
+            <div class="chart-wrapper" id="task5-chart"></div>
+
+            <div class="task-notes">
+                <strong>Why Some Months Are Shorter:</strong>
+                <p>• <strong>February (28 days):</strong> Shorter due to the astronomical calendar (2025 is a non-leap year).</p>
+                <p>• <strong>March (22 days):</strong> Shorter because the monitoring sensor suffered a <strong>9-day hardware failure</strong> from March 12 to March 20. Only 22 valid days were recorded.</p>
+                <p>• <strong>Standard Month Lengths:</strong> April, June, September, November have 30 days; January, May, July, August, October, December have 31 days.</p>
+                <p>• <strong>Severity Distribution:</strong> January, February, and December are overwhelmingly dominated by High and Severe days (zero Low or Moderate days in Jan and Feb). Conversely, June, July, and August have zero High or Severe days.</p>
+            </div>
+        </section>
+
+        <!-- TASK 6 -->
+        <section class="task-card" id="task6">
+            <div class="task-header">
+                <div class="task-title">
+                    <span>Task 6: Day-of-Week × Month Pollution Heatmap Matrix</span>
+                    <span class="task-badge">Heatmap Grid</span>
+                </div>
+            </div>
+            <div class="task-question">
+                "Question: is pollution tied to the day of the week, the month, or both? Work out the average city PM2.5 for every month and day-of-week combination. Draw a grid with months on one side and weekdays on the other, and colour each cell by its average, with a colour legend."
+            </div>
+
+            <div class="stat-banner">
+                <div class="stat-item"><span class="stat-label">Highest Month Avg:</span> <span class="stat-val alert-red">Feb (141.9 µg/m³)</span></div>
+                <div class="stat-item"><span class="stat-label">Lowest Month Avg:</span> <span class="stat-val alert-green">July (27.1 µg/m³)</span></div>
+                <div class="stat-item"><span class="stat-label">Weekday Range:</span> <span class="stat-val">80.6 µg/m³ (Sat) to 90.4 µg/m³ (Tue)</span></div>
+                <div class="stat-item"><span class="stat-label">Dominant Dimension:</span> <span class="stat-val">Month (Seasonal Meteorology)</span></div>
+            </div>
+
+            <div class="chart-wrapper" id="task6-chart"></div>
+
+            <div class="task-notes">
+                <strong>Driver Determination (Day-of-Week vs. Month):</strong>
+                <p>• <strong>Horizontal Striations (Month Dominance):</strong> The heatmap displays clear, uniform horizontal color bands across months. February (141.9 µg/m³), December (138.8 µg/m³), and January (137.6 µg/m³) are intensely red across all 7 days of the week.</p>
+                <p>• <strong>Minimal Weekday Variance:</strong> Looking down columns, weekday annual averages are remarkably uniform: Monday: 89.0, Tuesday: 90.4, Wednesday: 86.8, Thursday: 86.2, Friday: 89.2, Saturday: 80.6, Sunday: 82.3 µg/m³. Weekend averages are only ~8 µg/m³ lower than mid-week.</p>
+                <p>• <strong>Conclusion for the Director:</strong> Air pollution in the capital is governed almost exclusively by <strong>seasonal meteorology</strong> (winter temperature inversions, cold calm air, shallow boundary layer) and regional emissions (crop burning, winter heating, brick kilns), rather than weekly commuter traffic cycles.</p>
+            </div>
+        </section>
+
+        <!-- TASK 7 -->
+        <section class="task-card" id="task7">
+            <div class="task-header">
+                <div class="task-title">
+                    <span>Task 7: Monthly Best-Worst Spread (Band & Mean Chart)</span>
+                    <span class="task-badge">Band Chart</span>
+                </div>
+            </div>
+            <div class="task-question">
+                "Question: how wide is the gap between the best and worst day in each month? For each month, find the minimum, maximum and mean. Shade the area between the minimum and maximum, and draw the monthly mean as a line through it."
+            </div>
+
+            <div class="stat-banner">
+                <div class="stat-item"><span class="stat-label">Widest Monthly Spread:</span> <span class="stat-val alert-red">November (Spread = 239.1 µg/m³)</span></div>
+                <div class="stat-item"><span class="stat-label">Second Widest Spread:</span> <span class="stat-val">May (Spread = 213.6 µg/m³)</span></div>
+                <div class="stat-item"><span class="stat-label">Narrowest Spread:</span> <span class="stat-val alert-green">June (Spread = 32.3 µg/m³)</span></div>
+            </div>
+
+            <div class="chart-wrapper" id="task7-chart"></div>
+
+            <div class="task-notes">
+                <strong>Why Monthly Averages Hide Critical Public Health Risks:</strong>
+                <p>• <strong>November's Deceptive Mean:</strong> November has a monthly mean of <strong>129.0 µg/m³</strong>, which suggests high but continuous baseline pollution. However, the shaded spread shows an enormous range of <strong>239.1 µg/m³</strong> (from a minimum of 80.9 µg/m³ to a hazardous peak of 320.0 µg/m³ on Nov 8).</p>
+                <p>• <strong>May's Hidden Crisis:</strong> May has a low mean of <strong>59.9 µg/m³</strong>, but its spread is <strong>213.6 µg/m³</strong> due to the May 18 dust storm spike (245.0 µg/m³). Reporting only the mean hides the acute health hazard experienced on that outlier day.</p>
+                <p>• <strong>Public Health Implication:</strong> Respiratory damage and emergency hospital visits correlate with peak hourly and daily exposure spikes, which monthly averages completely conceal.</p>
+            </div>
+        </section>
+
+        <!-- TASK 8 -->
+        <section class="task-card" id="task8">
+            <div class="task-header">
+                <div class="task-title">
+                    <span>Task 8: Noise Reduction & Data Quality (Moving Average & Gap Handling)</span>
+                    <span class="task-badge">Honest Time Series</span>
+                </div>
+            </div>
+            <div class="task-question">
+                "Question: what is the trend once daily noise is removed, and was the sensor working all year? Calculate a 7-day moving average. Draw the daily values as a thin, faint line and the 7-day average as a thick, dark line. Find the gap in the dates. Break the line at the gap instead of joining the two sides, and do not average across it. Shade the gap, label it 'No data: sensor offline', and add a note with the number of missing days."
+            </div>
+
+            <div class="stat-banner">
+                <div class="stat-item"><span class="stat-label">Daily Raw Noise:</span> <span class="stat-val">Thin Faint Line</span></div>
+                <div class="stat-item"><span class="stat-label">7-Day Trend:</span> <span class="stat-val">Thick Dark Line</span></div>
+                <div class="stat-item"><span class="stat-label">Missing Duration:</span> <span class="stat-val alert-red">9 Days (March 12–20, 2025)</span></div>
+                <div class="stat-item"><span class="stat-label">Line Integrity:</span> <span class="stat-val alert-green">Discontinuous (No Interpolation)</span></div>
+            </div>
+
+            <div class="chart-wrapper" id="task8-chart"></div>
+
+            <div class="task-notes">
+                <strong>Why an Unbroken Line Over Missing Data Is Misleading:</strong>
+                <p>• <strong>False Certainty:</strong> Connecting two points across a 9-day blackout creates an artificial straight line, deceiving viewers into believing continuous measurements were recorded and stable.</p>
+                <p>• <strong>Hiding Events:</strong> March is a transition month with severe weather swings. A 9-day missing span could easily conceal a major smog spike or rain-clearing event.</p>
+                <p>• <strong>Proper Averaging:</strong> The 7-day moving average resets on March 21 and does not average across the gap. Averaging across the gap would corrupt post-outage statistics with stale readings from over a week earlier.</p>
+            </div>
+        </section>
+
+        <!-- TASK 9 -->
+        <section class="task-card" id="task9">
+            <div class="task-header">
+                <div class="task-title">
+                    <span>Task 9: Interactive Exploration (Brush & Zoom Focus + Context)</span>
+                    <span class="task-badge">Interactive Dashboard</span>
+                </div>
+            </div>
+            <div class="task-question">
+                "Question: can the Director pick any period and look at it closely? Add a small overview of the whole year under the main line chart. Selecting a range on it should zoom the main chart to those dates. Add a reset button that shows the full year again."
+            </div>
+
+            <div class="controls-row">
+                <button class="btn-ctrl btn-primary" id="task9-reset-btn">Reset Full Year</button>
+                <button class="btn-ctrl" id="btn-smog">Preset: Peak Smog Crisis (Nov–Dec)</button>
+                <button class="btn-ctrl" id="btn-monsoon">Preset: Cleanest Monsoon Dip (Jun–Aug)</button>
+                <button class="btn-ctrl" id="btn-widest">Preset: Widest Spread Month (Nov)</button>
+                <button class="btn-ctrl" id="btn-gap">Preset: Sensor Outage Window (March)</button>
+            </div>
+
+            <div class="chart-wrapper" id="task9-chart"></div>
+
+            <div class="task-notes">
+                <strong>How to Use:</strong>
+                <p>• <strong>Drag &amp; Resize:</strong> In the lower overview chart, click and drag to select any window of interest. The upper focus chart will zoom smoothly to the selected date range while updating its time axis.</p>
+                <p>• <strong>Preset Buttons:</strong> Use the quick buttons above to instantly inspect the peak winter smog surge, the summer monsoon cleaning period, the record November variability, or the March sensor outage.</p>
+            </div>
+        </section>
+
+        <!-- EXECUTIVE BRIEFING / QUESTIONS FOR THE DIRECTOR -->
+        <section class="director-section" id="director-briefing">
+            <h2 class="director-title">Smog Action Committee — Executive Briefing</h2>
+            <div class="director-subtitle">Comprehensive Evidence-Based Answers to the Director's 12 Questions (For Demo & Policy Presentation)</div>
+
+            <!-- Q1 -->
+            <div class="qa-card">
+                <div class="qa-header">
+                    <span class="qa-q">1. Seasonality: Which months are worst and which are best? Roughly how many times higher is the worst month than the best?</span>
+                    <span class="qa-tag">Task 2, 6, 7</span>
+                </div>
+                <div class="qa-a">
+                    • <strong>Worst Months:</strong> <strong>February (mean: 141.87 µg/m³)</strong>, <strong>December (138.81 µg/m³)</strong>, <strong>January (137.55 µg/m³)</strong>, and <strong>November (129.01 µg/m³)</strong>.<br>
+                    • <strong>Best Months:</strong> <strong>July (mean: 27.09 µg/m³)</strong>, followed by <strong>June (32.74 µg/m³)</strong> and <strong>August (36.89 µg/m³)</strong>.<br>
+                    • <strong>Ratio:</strong> The worst month (February: 141.87 µg/m³) is approximately <strong>5.24 times higher</strong> than the cleanest month (July: 27.09 µg/m³).
+                </div>
+            </div>
+
+            <!-- Q2 -->
+            <div class="qa-card">
+                <div class="qa-header">
+                    <span class="qa-q">2. Anomalies: Name the two highest days. Are they part of the seasonal pattern or isolated spikes? What real-world events could cause them?</span>
+                    <span class="qa-tag">Task 2, 8</span>
+                </div>
+                <div class="qa-a">
+                    • <strong>Highest Day:</strong> <strong>November 8, 2025 (320.0 µg/m³)</strong>. This spike occurs during the seasonal autumn smog window, but constitutes an acute extreme spike far above the monthly baseline. Potential real-world causes: regional post-harvest crop residue burning (parali burning), festive fireworks/celebrations, or severe temperature inversion trapping vehicular exhaust.<br>
+                    • <strong>Second Highest Day:</strong> <strong>May 18, 2025 (245.0 µg/m³)</strong>. This is an <em>isolated spike</em> in a month that otherwise averages 59.9 µg/m³ with predominantly moderate days. Potential real-world causes: pre-monsoon convective dust storm (Andhi), accidental forest or landfill fire, or temporary industrial emission flare.
+                </div>
+            </div>
+
+            <!-- Q3 -->
+            <div class="qa-card">
+                <div class="qa-header">
+                    <span class="qa-q">3. Guideline: How many days were above 15 µg/m³, and how many above 75 µg/m³? What share of the recorded days is each?</span>
+                    <span class="qa-tag">Task 2</span>
+                </div>
+                <div class="qa-a">
+                    • <strong>Above 15 µg/m³ (WHO 24-hr Guideline):</strong> <strong>355 out of 356 recorded days (99.72%)</strong>. Only one single day in the entire year met the WHO health standard (July 9, 2025: 11.8 µg/m³).<br>
+                    • <strong>Above 75 µg/m³ (WHO Interim Target 1):</strong> <strong>188 out of 356 recorded days (52.81%)</strong>. More than half the year suffered from dangerous pollution levels.
+                </div>
+            </div>
+
+            <!-- Q4 -->
+            <div class="qa-card">
+                <div class="qa-header">
+                    <span class="qa-q">4. Build-up: In which months do unhealthy days build up fastest, and in which months does the curve go flat?</span>
+                    <span class="qa-tag">Task 3</span>
+                </div>
+                <div class="qa-a">
+                    • <strong>Fastest Build-up:</strong> In <strong>January (+31 days, 100%)</strong>, <strong>February (+28 days, 100%)</strong>, <strong>November (+30 days, 100%)</strong>, and <strong>December (+31 days, 100%)</strong>, every single day is unhealthy, causing the cumulative area curve to climb steeply at a 1:1 daily slope.<br>
+                    • <strong>Curve Goes Flat:</strong> From <strong>June through August</strong>, exactly <strong>0 unhealthy days</strong> occurred (+0 in Jun, +0 in Jul, +0 in Aug). The curve remains completely flat at 100 days for nearly 4 consecutive months.
+                </div>
+            </div>
+
+            <!-- Q5 -->
+            <div class="qa-card">
+                <div class="qa-header">
+                    <span class="qa-q">5. Comparison: Does the suburb follow the same pattern as the city centre? Where do they differ most?</span>
+                    <span class="qa-tag">Task 4</span>
+                </div>
+                <div class="qa-a">
+                    • <strong>Pattern Agreement:</strong> Yes, the suburb mirrors the city's seasonal trajectory with high synchrony (correlation > 0.95), showing that regional meteorological cycles impact the whole metropolitan area.<br>
+                    • <strong>Baseline Disparity:</strong> The suburb is consistently cleaner throughout the year (suburb annual mean: <strong>69.17 µg/m³</strong> vs city: <strong>86.35 µg/m³</strong>, averaging 17.18 µg/m³ lower).<br>
+                    • <strong>Maximum Difference:</strong> The greatest divergence occurred on <strong>February 24, 2025</strong>, where city PM2.5 reached <strong>237.8 µg/m³</strong> compared to the suburb's <strong>157.3 µg/m³</strong> (a gap of <strong>80.5 µg/m³</strong>).
+                </div>
+            </div>
+
+            <!-- Q6 -->
+            <div class="qa-card">
+                <div class="qa-header">
+                    <span class="qa-q">6. Composition: Which months have Severe days, and which month has the most Low days? Why are some months shorter than others?</span>
+                    <span class="qa-tag">Task 5</span>
+                </div>
+                <div class="qa-a">
+                    • <strong>Months with Severe Days (>150 µg/m³):</strong> December (11 days), January (9 days), February (8 days), November (5 days), October (2 days), March (1 day), and May (1 day).<br>
+                    • <strong>Month with Most Low Days (≤35 µg/m³):</strong> <strong>July (28 days out of 31)</strong>, followed by June (17 days) and August (12 days).<br>
+                    • <strong>Why Months Differ in Length:</strong> February has 28 days due to the Gregorian calendar (2025 is not a leap year). <strong>March has only 22 recorded days</strong> due to a 9-day sensor malfunction (March 12–20). Standard 30-day and 31-day months account for the rest.
+                </div>
+            </div>
+
+            <!-- Q7 -->
+            <div class="qa-card">
+                <div class="qa-header">
+                    <span class="qa-q">7. Pattern: Is there a day-of-week pattern, or is the pattern mostly by month? What does that suggest about the cause of the pollution?</span>
+                    <span class="qa-tag">Task 6</span>
+                </div>
+                <div class="qa-a">
+                    • <strong>Month vs. Weekday:</strong> The pattern is <strong>overwhelmingly monthly/seasonal</strong>. Across the 12 months, averages vary by over 420% (from 27.1 to 141.9 µg/m³). Across the 7 days of the week, annual averages are nearly flat: Monday: 89.0, Tue: 90.4, Wed: 86.8, Thu: 86.2, Fri: 89.2, Sat: 80.6, Sun: 82.3 µg/m³ (a variance of only ~9.8 µg/m³).<br>
+                    • <strong>Root Cause Suggestion:</strong> This proves that air quality is dictated by <strong>seasonal meteorology</strong> (winter cold air inversions, low wind speeds, lack of vertical dispersion) and regional seasonal activities (agricultural residue burning, brick kilns, winter heating), rather than local weekday commuter traffic.
+                </div>
+            </div>
+
+            <!-- Q8 -->
+            <div class="qa-card">
+                <div class="qa-header">
+                    <span class="qa-q">8. Spread: In which month is the gap between the best and worst day the widest? Why does a monthly average hide this?</span>
+                    <span class="qa-tag">Task 7</span>
+                </div>
+                <div class="qa-a">
+                    • <strong>Widest Spread:</strong> <strong>November</strong>, with a spread of <strong>239.1 µg/m³</strong> (ranging from 80.9 µg/m³ to 320.0 µg/m³). May is second widest with 213.6 µg/m³ (31.4 to 245.0 µg/m³).<br>
+                    • <strong>Why Monthly Averages Hide This:</strong> November's mean is 129.0 µg/m³. A single average compresses large swings into a smooth number, hiding that residents endured an emergency spike to 320 µg/m³ on Nov 8. Acute public health emergencies are triggered by short-term peak exposures, which an aggregate mean erases.
+                </div>
+            </div>
+
+            <!-- Q9 -->
+            <div class="qa-card">
+                <div class="qa-header">
+                    <span class="qa-q">9. Trend and Data Quality: Is there a long-term rise or fall, or only a seasonal cycle? How many days are missing, and why is an unbroken line over the gap misleading?</span>
+                    <span class="qa-tag">Task 8</span>
+                </div>
+                <div class="qa-a">
+                    • <strong>Trend:</strong> Within this single calendar year, there is no long-term secular trend; there is a distinct <strong>U-shaped seasonal cycle</strong> (starting high in winter, dipping in summer, and returning to identical severe levels by December).<br>
+                    • <strong>Missing Days:</strong> Exactly <strong>9 days are missing</strong> (March 12 through March 20, 2025).<br>
+                    • <strong>Misleading Unbroken Line:</strong> Drawing a continuous line across missing days fabricates non-existent data points, misleads stakeholders into believing the sensor was operational, and can smooth over a real pollution crisis or rain clearing event.
+                </div>
+            </div>
+
+            <!-- Q10 -->
+            <div class="qa-card">
+                <div class="qa-header">
+                    <span class="qa-q">10. Zoom: Zoom into the month with the widest spread (November). What can you see there that you could not see in the full-year chart?</span>
+                    <span class="qa-tag">Task 9</span>
+                </div>
+                <div class="qa-a">
+                    • <strong>Granular Resolution in November:</strong> Zooming into November reveals that the month began with moderate-high pollution (80–130 µg/m³). On November 8, air quality deteriorated precipitously into a <strong>hazardous emergency peak of 320.0 µg/m³</strong>, remained elevated above 200 µg/m³ on Nov 9, and then dropped back before a second late-month surge around Nov 26–29.<br>
+                    • In the full-year view, this appears as a compressed vertical needle; the zoom view clarifies the exact multi-day duration and ramp-up rate of the episode.
+                </div>
+            </div>
+
+            <!-- Q11 -->
+            <div class="qa-card">
+                <div class="qa-header">
+                    <span class="qa-q">11. Chart Choice: The committee member used a pie chart of monthly averages. List two things it could not tell the Director that your charts do.</span>
+                    <span class="qa-tag">Lab Theory</span>
+                </div>
+                <div class="qa-a">
+                    • <strong>1. Chronological Continuity &amp; Dynamics:</strong> A pie chart destroys the time sequence entirely. It cannot show continuous trends, rates of build-up (Task 3), episodic multi-day peaks (Task 2 &amp; 9), or how pollution evolves day-by-day.<br>
+                    • <strong>2. Extremes, Spread &amp; Sensor Malfunctions:</strong> A pie slice only shows a central tendency. It hides peak hazardous spikes (such as 320 µg/m³ in Nov or 245 µg/m³ in May), conceals the monthly spread (Task 7), and masks data quality gaps like the 9-day March sensor blackout (Task 8).
+                </div>
+            </div>
+
+            <!-- Q12 -->
+            <div class="qa-card">
+                <div class="qa-header">
+                    <span class="qa-q">12. Recommendation: If the committee can restrict outdoor school activities for only two months, which two would you pick? Support your answer with evidence from at least two different charts.</span>
+                    <span class="qa-tag">Policy Decision</span>
+                </div>
+                <div class="qa-a">
+                    <div class="highlight-box">
+                        <strong>Policy Recommendation: Restrict outdoor school activities during DECEMBER and JANUARY.</strong>
+                    </div>
+                    <p style="margin-top:8px;"><strong>Evidence from Task 5 (Stacked Levels):</strong> December has <strong>11 Severe days (>150 µg/m³)</strong>, the highest in the entire year, while January has <strong>9 Severe days</strong>. Combined, Dec & Jan account for over 54% of all Severe pollution days in 2025. Furthermore, <strong>100% of days in December (31/31) and January (31/31)</strong> exceed the 75 µg/m³ threshold.</p>
+                    <p style="margin-top:6px;"><strong>Evidence from Task 6 (Heatmap) &amp; Task 7 (Monthly Spread):</strong> December (mean: 138.8 µg/m³) and January (mean: 137.6 µg/m³) have consistently high pollution baselines with <em>zero safe days</em> (January's cleanest day was 93.3 µg/m³; December's was 78.7 µg/m³). Outdoor activity restrictions during Dec–Jan provide maximum health protection against chronic particulate inhalation during school hours.</p>
+                </div>
+            </div>
+
+        </section>
+
+    </div>
+
+    <!-- Application Script -->
+    <script src="app.js"></script>
+</body>
+</html>
+

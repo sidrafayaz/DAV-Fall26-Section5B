@@ -1,0 +1,94 @@
+FAST School of Computing, National University of Computer and Emerging Sciences, Islamabad 
+                                                    Data Analysis and Visualization 
+   Lab Manual 9
+Lab Learning Outcomes:
+By the end of this lab, students will be able to:
+Use D3.js to load, reshape and prepare tabular data for hierarchical and network visualization (for example with d3.csv, d3.autoType, d3.group, d3.hierarchy and Set), converting flat CSV rows into a parent-child hierarchy and an edge list into a node list.
+Design and implement hierarchical visualizations in D3.js (treemaps and dendrograms) using layouts such as d3.treemap and d3.cluster, and explain how a layout adds coordinates (x0, y0, x1, y1) to the data before it is bound to SVG rectangles, circles and link paths.
+Design and implement a force-directed node-link diagram in D3.js using d3.forceSimulation, forceLink, forceManyBody and d3.drag, encoding relationships and their strength through link width, and node importance (degree) through node size, to identify hubs and isolated nodes.
+Design and implement geospatial visualizations in D3.js (choropleth and point maps) using GeoJSON, projections (d3.geoNaturalEarth1, d3.geoMercator), d3.geoPath and sequential color and square-root radius scales, joining a data table to map features by a shared key and handling missing data.
+Analyze and justify spatial encoding choices (position, size, color, line width) in a combined map, and evaluate the trade-offs between chart types (treemap versus dendrogram, choropleth versus point map) in terms of accuracy of perception, clarity, interactivity and suitability for the data’s structure.
+Submission Requirements:
+Submit the project folder with the HTML file, the JavaScript file (if the code is kept separate), on both GCR and GitHub. Submission is incomplete without both.
+GitHub: push into your section repo, inside the week’s folder, in your own subfolder named RollNumber_Section (e.g., 24F1234_5A). The subfolder must contain the .html file, any .js file, and the cleaned dataset, kept in the same folder structure the code expects (for example dataset/penguins.csv), so the chart loads without editing any paths.
+GCR: use the file naming convention RollNumber_Section_LabXX (e.g., 24F1234_5A_Lab06.html). If the lab has more than one file, upload a single .zip with that name.
+Test the page through a local server (such as VS Code Live Server) before submitting. The chart and all visuals must appear when the page is opened, with no errors in the Console other than harmless ones like the missing favicon.
+Keep your GitHub subfolders updated weekly. A complete, organized profile is checked at the Capstone stage (Week 15–16).
+complete, organized profile is checked at the Capstone stage (Week 15–16).
+In the previous lab you learned the core D3.js workflow: bind data to SVG elements, use scales to convert data values into pixel values, add axes, and respond to user interaction. That workflow works well for tabular data (rows and columns), such as sales per month or scores per student.
+Not all data is tabular. Some data has a structure that a bar chart or line chart cannot show:
+Data organized as parent and child (folders, company departments, categories)
+Data organized as connections (friendships, flight routes, web links)
+Data tied to locations (countries, cities, earthquakes)
+Hierarchical data is data arranged in levels, where each item has one parent and may have many children. A file system is a good example: a folder contains subfolders, which contain files.
+Treemap is a visualization that shows hierarchical data as nested rectangles. The area of each rectangle represents a value (such as file size or population), and rectangles are grouped inside their parent.
+Dendrogram (tree diagram) is a visualization that shows a hierarchy as a tree of nodes joined by lines. It shows how items branch from a root and how they are grouped.
+Network data is data that describes relationships between entities. It consists of nodes (the entities) and links (the connections between them).
+Node-link diagram is a visualization that draws nodes as circles and links as lines between them, so you can see who or what is connected to whom. When the layout is calculated by a physics-style simulation, it is called a force-directed graph.
+Geospatial data is data that has a geographic location, expressed as coordinates (longitude and latitude) or as geographic regions (countries, provinces, districts).
+Choropleth map is a map where geographic regions are colored according to a data value, for example population density per province. Darker or lighter colors show higher or lower values.
+Point map is a map where individual locations are marked with symbols (usually circles) placed at their coordinates. Size or color can show an extra value, such as the magnitude of an earthquake.
+Spatial encoding is the practice of using position, size, and color to represent data on a map or layout. Examples are placing a point at its real location, scaling a circle's radius by a value, or coloring a region by a category.
+Layout (D3) is a function that takes your data and adds the coordinates needed to draw it (x, y, width, height). Treemaps, trees, and force simulations are all layouts.
+Projection (D3) is a function that converts geographic coordinates (longitude, latitude) on a sphere into flat (x, y) pixel positions on the screen.
+Why do we need these in a visualization lab?
+Real data is not always a table. Organizations, file systems, social networks, and maps are everywhere in data science. A student who only knows bar and line charts cannot visualize them well.
+The right chart makes the pattern visible. A treemap shows at a glance which category takes up the most space. A network diagram shows which node is most connected. A choropleth map shows regional differences that a table of numbers hides.
+They extend what you already know. Every chart in this lab still uses the same D3 pattern: data join, scales, SVG elements, and interaction. The only new idea is a layout or projection step that calculates positions first. This builds on the previous lab instead of replacing it.
+They teach new ways to encode data. You will practice choosing between area, position, color, and connection to show information accurately, which is a core visualization skill.
+They are used in professional work. Treemaps appear in finance and disk-usage tools, network graphs in social media and cybersecurity analysis, and maps in public health, elections, and logistics.
+Examples:
+Below are the  wrong-vs-right pairs. 
+Lab Tasks:
+Task 1: Course Enrollment Treemap
+Dataset: university.csv (columns: department, course, students)
+Problem statement: The university administration wants to see which courses and departments carry the largest enrollment. Load the dataset, reshape it into a hierarchy (University → Department → Course), and build a treemap in which the area of each rectangle represents the number of students.
+Requirements
+Rectangles must be grouped and colored by department.
+Each rectangle must show the course name as a label.
+Hovering over a rectangle must show a tooltip with the course, department and student count.
+Add a title and a short color legend for the four departments. 
+Task 2: University Structure Dendrogram
+Dataset: university.csv
+Problem statement: The registrar wants a diagram that shows how courses are organized under departments. Build a horizontal dendrogram of the same data, with the university as the root, the departments as branches and the courses as leaves.
+Requirements
+Draw nodes as circles and parent-child connections as curved links.
+Place labels so they do not overlap the links (leaf labels on the right, parent labels on the left).
+Color the nodes by depth (root, department, course).
+Extension: clicking a department collapses or expands its courses.
+Task 3: Flight Route Network
+Dataset: flights.csv (columns: source, target, flights)
+Problem statement: An airline analyst wants to understand how ten Pakistani cities are connected by weekly flights. Build the node list from the edge list, then create a force-directed node-link diagram.
+Requirements
+Each city is a circle with its name as a label.
+Link thickness must represent the number of flights per week, using a scale.
+Node radius must represent the number of routes (degree) for the city.
+Nodes must be draggable.
+Hovering over a city must highlight its routes and fade the others.
+Task 4: World Population Choropleth
+Dataset: population.csv (columns: id, country, population_millions) and the world GeoJSON map file
+Problem statement: A news team wants a map showing which countries are the most populous. Join the population data to the map by country code and color each country by population.
+Requirements
+Use a projection and a path generator to draw the countries.
+Use a sequential color scale (square-root scale recommended).
+Countries without data must be light gray.
+Add a hover tooltip with the country name and population, and highlight the country border on hover.
+Add a color legend with minimum and maximum labels.
+Task 5: Pakistan Cities Point Map
+Dataset: pakistan_cities.csv (columns: name, lat, lon, pop) and the world GeoJSON map file
+Problem statement: A planning department wants to see where Pakistan’s largest cities are located. Zoom the map to Pakistan and mark each city with a circle whose area represents population.
+Requirements
+Use a Mercator projection centered on Pakistan.
+Convert coordinates with projection([lon, lat]) (longitude first).
+Use a square-root radius scale.
+Use semi-transparent circles so overlapping cities remain visible.
+Label only cities with a population above 1 million; show all cities in the tooltip.
+Task 6: Combined Spatial Encoding Map
+Datasets: pakistan_cities.csv and flights.csv
+Problem statement: Combine both datasets into one map that shows the cities, their populations and the flight routes between them.
+Requirements
+Match each route’s source and target to the city coordinates.
+Draw routes first, then cities on top.
+Encode four variables: position = location, circle size = population, color = hub (4 or more routes) or not, line width = flights per week.
+Add a legend explaining all four encodings.
+Hovering over a city highlights its routes and dims the rest.
