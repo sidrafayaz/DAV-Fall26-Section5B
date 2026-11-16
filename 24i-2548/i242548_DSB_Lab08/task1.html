@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Lab Task 1: Richest Countries</title>
+    <!-- Load D3.js -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body { 
+            font-family: sans-serif; 
+            margin: 20px;
+            color: #333;
+        }
+
+        h2 {
+            margin-bottom: 6px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        /* Step 4: Hover Tooltip Styling */
+        #tooltip {
+            position: absolute;
+            background: white;
+            border: 1px solid #ccc;
+            padding: 6px 12px;
+            border-radius: 4px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            font-size: 13px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+
+        /* Controls Container (Buttons + Legend) */
+        #controls-container {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 20px;
+            margin-left: 110px;
+        }
+
+        #buttons {
+            display: inline-flex;
+            gap: 8px;
+        }
+
+        button { 
+            padding: 6px 16px; 
+            cursor: pointer; 
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: #f7f7f7;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        button.active {
+            background: #007acc;
+            color: white;
+            border-color: #007acc;
+        }
+
+        button:hover:not(.active) {
+            background: #e9e9e9;
+        }
+
+        /* Step 3: Continent Legend Styling */
+        #legend {
+            display: inline-flex;
+            gap: 14px;
+            align-items: center;
+            font-size: 13px;
+            flex-wrap: wrap;
+            background: #fdfdfd;
+            padding: 6px 14px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+        }
+
+        .legend-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            display: inline-block;
+            border-radius: 2px;
+        }
+
+        .bar:hover { 
+            opacity: 0.8; 
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Lab Task 1: The Richest Countries (1952 vs 2007)</h2>
+    <p class="subtitle">Scenario: The UN asks: <em>"Which countries are the richest? Is it always the same ones?"</em></p>
+
+    <!-- Step 5: Two buttons & Step 3: Continent Legend -->
+    <div id="controls-container">
+        <div id="buttons">
+            <button id="btn-1952">1952</button>
+            <button id="btn-2007" class="active">2007</button>
+        </div>
+        <div id="legend">
+            <span style="font-weight: bold; color: #555; margin-right: 4px;">Continent:</span>
+        </div>
+    </div>
+    
+    <div id="chart"></div>
+    <div id="tooltip"></div>
+
+    <script>
+        // Set up dimensions and margins
+        const margin = {top: 20, right: 40, bottom: 40, left: 110};
+        const width = 800 - margin.left - margin.right;
+        const height = 400 - margin.top - margin.bottom;
+
+        // Append SVG to the page
+        const svg = d3.select("#chart")
+            .append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", `translate(${margin.left},${margin.top})`);
+
+        // Tooltip reference
+        const tooltip = d3.select("#tooltip");
+
+        // Set up scales
+        const x = d3.scaleLinear().range([0, width]);
+        const y = d3.scaleBand().range([0, height]).padding(0.15);
+        
+        // Step 3: Colour by continent
+        const continents = ["Asia", "Europe", "Americas", "Oceania", "Africa"];
+        const color = d3.scaleOrdinal()
+            .domain(continents)
+            .range(["#1f77b4", "#9467bd", "#2ca02c", "#d62728", "#ff7f0e"]);
+
+        // Build the Continent Legend dynamically
+        const legend = d3.select("#legend");
+        continents.forEach(c => {
+            const item = legend.append("div").attr("class", "legend-item");
+            item.append("span")
+                .attr("class", "legend-color")
+                .style("background-color", color(c));
+            item.append("span").text(c);
+        });
+
+        // Axis groups
+        const xAxisGroup = svg.append("g").attr("transform", `translate(0,${height})`);
+        const yAxisGroup = svg.append("g");
+
+        // Load the dataset (supports both dataset/gapminder.csv and root gapminder.csv)
+        const csvPath = "dataset/gapminder.csv";
+        d3.csv(csvPath, d3.autoType)
+          .catch(() => d3.csv("gapminder.csv", d3.autoType))
+          .then(data => {
+            
+            // Function to update the chart based on the selected year
+            function update(year) {
+                // Step 2: Filter for the year, sort descending by income, and keep top 10
+                const filteredData = data.filter(d => d.year === year);
+                const sortedData = filteredData.sort((a, b) => b.gdpPercap - a.gdpPercap);
+                const top10 = sortedData.slice(0, 10);
+
+                // Update scale domains
+                x.domain([0, d3.max(top10, d => d.gdpPercap)]);
+                y.domain(top10.map(d => d.country));
+
+                // Update axes with a smooth transition
+                xAxisGroup.transition().duration(1000).call(d3.axisBottom(x).ticks(6).tickFormat(d => `$${d3.format(",")(d)}`));
+                yAxisGroup.transition().duration(1000).call(d3.axisLeft(y));
+
+                // Bind data to rectangles (Step 6 concept: d => d.country keeps track of elements during transition)
+                const bars = svg.selectAll(".bar")
+                    .data(top10, d => d.country);
+
+                // Enter + Update pattern using .join()
+                bars.join("rect")
+                    .attr("class", "bar")
+                    // Step 3: Fill color based on continent
+                    .attr("fill", d => color(d.continent))
+                    // Step 4: Hover interactions for Tooltip
+                    .on("mouseover", (event, d) => {
+                        tooltip.style("opacity", 1)
+                               .html(`<strong>${d.country}</strong> (${d.continent})<br>Income: $${Math.round(d.gdpPercap).toLocaleString()}`);
+                    })
+                    .on("mousemove", (event) => {
+                        tooltip.style("left", (event.pageX + 15) + "px")
+                               .style("top", (event.pageY - 15) + "px");
+                    })
+                    .on("mouseout", () => {
+                        tooltip.style("opacity", 0);
+                    })
+                    // Step 5: Smooth sliding transition
+                    .transition().duration(1000)
+                    .attr("y", d => y(d.country))
+                    .attr("x", 0)
+                    .attr("height", y.bandwidth())
+                    .attr("width", d => x(d.gdpPercap));
+            }
+
+            // Step 2: Draw the top 10 for 2007 initially
+            update(2007);
+
+            // Step 5: Button event listeners with active class toggling
+            d3.select("#btn-1952").on("click", function() {
+                d3.selectAll("#buttons button").classed("active", false);
+                d3.select(this).classed("active", true);
+                update(1952);
+            });
+
+            d3.select("#btn-2007").on("click", function() {
+                d3.selectAll("#buttons button").classed("active", false);
+                d3.select(this).classed("active", true);
+                update(2007);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Lab Task 2: Debugging Bar Chart</title>
+    <!-- Load D3.js -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body { 
+            font-family: sans-serif; 
+            margin: 20px;
+            color: #333;
+        }
+
+        h2 {
+            margin-bottom: 6px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+
+        /* Controls Container (Buttons + Continent Legend) */
+        #controls-container { 
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 14px; 
+            margin-left: 110px; 
+        }
+
+        #button-group {
+            display: inline-flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        button { 
+            padding: 7px 15px; 
+            cursor: pointer; 
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: #f0f0f0;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        button.active {
+            background: #007acc;
+            color: white;
+            border-color: #007acc;
+        }
+
+        button:hover:not(.active) {
+            background: #e2e2e2;
+        }
+
+        /* Continent Legend */
+        #legend {
+            display: inline-flex;
+            gap: 12px;
+            align-items: center;
+            font-size: 13px;
+            flex-wrap: wrap;
+            background: #fafafa;
+            padding: 6px 14px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+        }
+
+        .legend-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            display: inline-block;
+            border-radius: 2px;
+        }
+
+        /* Dynamic Status Banner */
+        #status-msg {
+            margin-left: 110px;
+            margin-bottom: 15px;
+            font-size: 13.5px;
+            color: #444;
+            background: #f4f8fb;
+            padding: 8px 14px;
+            border-left: 4px solid #007acc;
+            border-radius: 2px;
+            max-width: 780px;
+        }
+
+        /* Scrollable Chart Wrapper for 142 Countries */
+        #chart-wrapper {
+            margin-left: 0;
+            max-width: 850px;
+            overflow-x: auto;
+            overflow-y: auto;
+            max-height: 520px;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            background: #fff;
+        }
+
+        .bar { 
+            opacity: 0.9;
+            transition: opacity 0.15s;
+        }
+        
+        .bar:hover { 
+            opacity: 1;
+            filter: brightness(1.15);
+        }
+
+        /* Tooltip */
+        #tooltip {
+            position: absolute;
+            background: white;
+            border: 1px solid #ccc;
+            padding: 6px 12px;
+            border-radius: 4px;
+            pointer-events: none;
+            opacity: 0;
+            font-size: 13px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+
+        /* Lab report & questions section */
+        .report-section {
+            margin-top: 36px;
+            max-width: 850px;
+            border-top: 2px solid #eee;
+            padding-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f7f7f7;
+        }
+
+        .qa-box {
+            background: #fafafa;
+            border-left: 4px solid #007acc;
+            padding: 10px 15px;
+            margin-bottom: 12px;
+            border-radius: 2px;
+        }
+
+        .qa-box p {
+            margin: 4px 0;
+            font-size: 14px;
+        }
+
+        .qa-box strong {
+            color: #111;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Lab Task 2: UN Country Income Comparison (Debugging)</h2>
+    <p class="subtitle">Scenario: The UN wants to compare countries by income. Draw one bar for each country.</p>
+
+    <!-- 3 Buttons & Continent Legend -->
+    <div id="controls-container">
+        <div id="button-group">
+            <button id="btn-initial" class="active">1. Initial Attempt (1704 rects)</button>
+            <button id="btn-all142">2. All 142 Countries (2007)</button>
+            <button id="btn-top10">3. Top 10 Richest (2007)</button>
+        </div>
+        <div id="legend">
+            <span style="font-weight: bold; color: #555; margin-right: 2px;">Continent:</span>
+        </div>
+    </div>
+
+    <div id="status-msg">Loading dataset...</div>
+
+    <div id="chart-wrapper">
+        <div id="chart"></div>
+    </div>
+    <div id="tooltip"></div>
+
+    <!-- DevTools Debugging Table & Answers required by Lab Manual -->
+    <div class="report-section">
+        <h3>Step 1: Browser Developer Tools Investigation (F12)</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Tab</th>
+                    <th>What to do</th>
+                    <th>Findings / What happened</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Console</strong></td>
+                    <td>Press F12 &rarr; Press Ctrl+R. Is there a red message?</td>
+                    <td><strong>No red error message.</strong> The code runs without JavaScript errors; the problem is visual and logical.</td>
+                </tr>
+                <tr>
+                    <td><strong>Network</strong></td>
+                    <td>Press Ctrl+R. Did gapminder.csv load?</td>
+                    <td><strong>Yes (Status 200).</strong> The CSV file loaded completely (~85 KB, 1,704 rows).</td>
+                </tr>
+                <tr>
+                    <td><strong>Elements</strong></td>
+                    <td>Expand &lt;svg&gt; &rarr; Click one &lt;rect&gt;. How many &lt;rect&gt;? Height?</td>
+                    <td><strong>1,704 &lt;rect&gt; elements found.</strong> Each bar height is only ~2.5px, and 12 overlapping bars are drawn for each country.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>Step 2: Answers to Lab Task 2 Questions (One sentence each)</h3>
+
+        <div class="qa-box">
+            <p><strong>1. How many &lt;rect&gt; did you expect? How many did you get? Why?</strong></p>
+            <p>We expected 142 &lt;rect&gt; elements (one for each country), but got 1,704 because <code>gapminder.csv</code> contains 12 survey years for each country (142 &times; 12 = 1,704 rows), drawing 12 overlapping bars per country.</p>
+        </div>
+
+        <div class="qa-box">
+            <p><strong>2. How tall is one bar? Can you read the names?</strong></p>
+            <p>Each bar is only about 2.5 pixels tall, causing all 142 country names and tick marks on the Y-axis to collide into an unreadable black smear.</p>
+        </div>
+
+        <div class="qa-box">
+            <p><strong>3. After your first fix, is the chart easy to read? What would you change?</strong></p>
+            <p>Filtering to a single year reduces the bars to 142, but 142 bars are still too cramped to read in a standard viewport; to make it readable, we should filter and rank to show only the Top 10 richest countries.</p>
+        </div>
+
+        <div class="qa-box">
+            <p><strong>4. Now show the 10 richest countries. Is Norway in your chart? If not, what is missing?</strong></p>
+            <p>If we sort all 1,704 rows without filtering by year, Norway is missing because historic Kuwait records from earlier decades occupy the top spots; what is missing is a filter condition for the year (<code>d.year === 2007</code>).</p>
+        </div>
+    </div>
+
+    <script>
+        // Dimensions and margin (margin.left = 110 as required by manual)
+        const margin = {top: 25, right: 40, bottom: 40, left: 110};
+        const width = 800 - margin.left - margin.right;
+        const defaultHeight = 440 - margin.top - margin.bottom;
+
+        // Tooltip
+        const tooltip = d3.select("#tooltip");
+
+        // Step 3: Continent Color Scale
+        const continents = ["Asia", "Europe", "Americas", "Oceania", "Africa"];
+        const color = d3.scaleOrdinal()
+            .domain(continents)
+            .range(["#1f77b4", "#9467bd", "#2ca02c", "#d62728", "#ff7f0e"]);
+
+        // Build Continent Legend
+        const legend = d3.select("#legend");
+        continents.forEach(c => {
+            const item = legend.append("div").attr("class", "legend-item");
+            item.append("span")
+                .attr("class", "legend-color")
+                .style("background-color", color(c));
+            item.append("span").text(c);
+        });
+
+        // Load data with d3.autoType (supports dataset/gapminder.csv and gapminder.csv)
+        const csvPath = "dataset/gapminder.csv";
+        d3.csv(csvPath, d3.autoType)
+          .catch(() => d3.csv("gapminder.csv", d3.autoType))
+          .then(data => {
+
+            // Render function supporting the 3 requested states
+            function render(mode) {
+                // Clear previous chart SVG
+                d3.select("#chart").selectAll("*").remove();
+
+                let plotData = [];
+                let currentHeight = defaultHeight;
+
+                if (mode === 'initial') {
+                    // 1. Initial Attempt (Buggy): Plot all 1,704 rows directly
+                    plotData = data;
+                    currentHeight = defaultHeight;
+                    d3.select("#status-msg").html("⚠️ <strong>1. Initial Attempt (Buggy):</strong> Plotting all 1,704 rows across 12 years. Notice 12 overlapping bars per country and compressed Y-axis text. Total &lt;rect&gt; count = 1,704.");
+                } else if (mode === 'all142') {
+                    // 2. All 142 Countries for Year 2007 (Scrollable for readability)
+                    plotData = data.filter(d => d.year === 2007)
+                                   .sort((a, b) => b.gdpPercap - a.gdpPercap);
+                    currentHeight = 2200; // Expanded height so all 142 country names are readable
+                    d3.select("#status-msg").html("ℹ️ <strong>2. All 142 Countries (2007):</strong> Exactly 142 bars (1 per country) sorted by income. Scroll down inside the chart box to view all countries clearly!");
+                } else if (mode === 'top10') {
+                    // 3. Top 10 Richest Countries for Year 2007
+                    plotData = data.filter(d => d.year === 2007)
+                                   .sort((a, b) => b.gdpPercap - a.gdpPercap)
+                                   .slice(0, 10);
+                    currentHeight = defaultHeight;
+                    d3.select("#status-msg").html("✅ <strong>3. Top 10 Richest Countries (2007):</strong> Filtered for 2007 and top 10 kept. Norway is #1 at $49,357!");
+                }
+
+                // Append SVG
+                const svg = d3.select("#chart")
+                    .append("svg")
+                    .attr("width", width + margin.left + margin.right)
+                    .attr("height", currentHeight + margin.top + margin.bottom)
+                    .append("g")
+                    .attr("transform", `translate(${margin.left},${margin.top})`);
+
+                // Scales
+                const x = d3.scaleLinear()
+                    .domain([0, d3.max(plotData, d => d.gdpPercap)])
+                    .range([0, width]);
+
+                const y = d3.scaleBand()
+                    .domain(plotData.map(d => d.country))
+                    .range([0, currentHeight])
+                    .padding(mode === 'all142' ? 0.25 : 0.2);
+
+                // Axes
+                svg.append("g")
+                    .attr("transform", `translate(0,${currentHeight})`)
+                    .call(d3.axisBottom(x).ticks(6).tickFormat(d => `$${d3.format(",")(d)}`));
+
+                svg.append("g")
+                    .call(d3.axisLeft(y))
+                    .selectAll("text")
+                    .style("font-size", mode === 'initial' ? "8px" : (mode === 'all142' ? "10px" : "12px"));
+
+                // Draw Rectangles (Bars)
+                svg.selectAll(".bar")
+                    .data(plotData)
+                    .join("rect")
+                    .attr("class", "bar")
+                    .attr("x", 0)
+                    .attr("y", d => y(d.country))
+                    .attr("width", d => x(d.gdpPercap))
+                    .attr("height", y.bandwidth())
+                    .attr("fill", d => color(d.continent))
+                    .on("mouseover", (event, d) => {
+                        tooltip.style("opacity", 1)
+                               .html(`<strong>${d.country}</strong> (${d.continent})<br>Year: ${d.year}<br>Income: $${Math.round(d.gdpPercap).toLocaleString()}`);
+                    })
+                    .on("mousemove", (event) => {
+                        tooltip.style("left", (event.pageX + 14) + "px")
+                               .style("top", (event.pageY - 15) + "px");
+                    })
+                    .on("mouseout", () => {
+                        tooltip.style("opacity", 0);
+                    });
+            }
+
+            // Initially render the buggy attempt as instructed by manual
+            render('initial');
+
+            // Button Click Handlers
+            d3.select("#btn-initial").on("click", function() {
+                d3.selectAll("#button-group button").classed("active", false);
+                d3.select(this).classed("active", true);
+                render('initial');
+            });
+
+            d3.select("#btn-all142").on("click", function() {
+                d3.selectAll("#button-group button").classed("active", false);
+                d3.select(this).classed("active", true);
+                render('all142');
+            });
+
+            d3.select("#btn-top10").on("click", function() {
+                d3.selectAll("#button-group button").classed("active", false);
+                d3.select(this).classed("active", true);
+                render('top10');
+            });
+        });
+    </script>
+</body>
+</html>
