@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Lab 10: Air Quality Time Series</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body { font-family: sans-serif; }
+        .chart-container { margin-bottom: 40px; }
+        .reference-line { stroke: red; stroke-dasharray: 4; }
+        .missing-data-gap { fill: #f0f0f0; }
+        .line-city { fill: none; stroke: steelblue; stroke-width: 2px; }
+    </style>
+</head>
+<body>
+    <h1>2025 Air Quality Analysis</h1>
+    <div id="task1-stats">
+        <h2>Task 1: Data Overview</h2>
+    </div>
+    <div id="task2-line-chart" class="chart-container">
+        <h2>Task 2: City PM2.5 Line Chart</h2>
+    </div>
+    <!-- Add divs for Tasks 3-9 here -->
+    <div id="task3-area-chart" class="chart-container">
+        <h2>Task 3: Unhealthy Days Build-up</h2>
+    </div>
+    <div id="task4-multi-line" class="chart-container">
+        <h2>Task 4: City vs Suburb Comparison</h2>
+    </div>
+    <div id="task5-stacked-chart" class="chart-container">
+        <h2>Task 5: Monthly Pollution Composition</h2>
+    </div>
+    <div id="task6-heatmap" class="chart-container">
+        <h2>Task 6: Day vs Month Heatmap</h2>
+    </div>
+    <div id="task7-band-chart" class="chart-container">
+        <h2>Task 7: Monthly Spread (Min, Max, Mean)</h2>
+    </div>
+    <div id="task8-moving-avg" class="chart-container">
+        <h2>Task 8: Trend & Gap (7-Day Moving Average)</h2>
+    </div>
+    <div id="task9-zoom" class="chart-container">
+        <h2>Task 9: Interactive Zoomable Line Chart</h2>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>

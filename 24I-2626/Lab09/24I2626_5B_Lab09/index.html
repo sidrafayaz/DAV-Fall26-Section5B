@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D3 Visualization Lab</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        .chart-container { margin-bottom: 50px; border: 1px solid #ccc; padding: 15px; border-radius: 8px;}
+        h2 { margin-top: 0; color: #333; }
+        /* Tooltip styling */
+        .tooltip {
+            position: absolute; text-align: center; padding: 8px; font-size: 12px;
+            background: rgba(0, 0, 0, 0.8); color: #fff; border-radius: 4px;
+            pointer-events: none; opacity: 0; transition: opacity 0.2s;
+        }
+        .node circle { fill: #fff; stroke: steelblue; stroke-width: 3px; cursor: pointer;}
+        .node text { font: 12px sans-serif; }
+        .link { fill: none; stroke: #ccc; stroke-width: 2px; }
+        .map-path { stroke: #fff; stroke-width: 0.5px; transition: opacity 0.2s;}
+        .map-path:hover { stroke: #000; stroke-width: 1.5px; opacity: 0.8;}
+    </style>
+</head>
+<body>
+    <h1>Lab 9: Hierarchical, Network & Geospatial Visualizations</h1>
+    <div id="tooltip" class="tooltip"></div>
+
+    <div class="chart-container" id="task1">
+        <h2>Task 1: Course Enrollment Treemap</h2>
+    </div>
+    
+    <div class="chart-container" id="task2">
+        <h2>Task 2: University Structure Dendrogram</h2>
+    </div>
+
+    <div class="chart-container" id="task3">
+        <h2>Task 3: Flight Route Network</h2>
+    </div>
+
+    <div class="chart-container" id="task4">
+        <h2>Task 4: World Population Choropleth</h2>
+    </div>
+
+    <div class="chart-container" id="task5">
+        <h2>Task 5: Pakistan Cities Point Map</h2>
+    </div>
+
+    <div class="chart-container" id="task6">
+        <h2>Task 6: Combined Spatial Encoding Map</h2>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
