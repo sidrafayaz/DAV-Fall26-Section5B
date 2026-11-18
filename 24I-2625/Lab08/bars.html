@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lab 8 - Task 2: One bar per country</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    body { font-family: Georgia, serif; margin: 24px; color: #222; }
+    svg text { font-family: Georgia, serif; }
+    #scroll-box {
+      max-height: 500px;          /* visible window; the chart scrolls inside it */
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      width: 830px;
+    }
+    .legend { margin: 8px 0; font-size: 14px; }
+    .legend span { display: inline-block; margin-right: 16px; }
+    .legend i { display: inline-block; width: 12px; height: 12px; margin-right: 5px; }
+  </style>
+</head>
+<body>
+  <h1>Income per person by country</h1>
+  <p id="note"></p>
+  <div class="legend" id="legend"></div>
+  <div id="scroll-box">
+    <svg id="chart"></svg>
+  </div>
+
+<script>
+/* STAGE controls which version of the chart you see:
+     1 = first attempt (all rows, fixed height)  -> the "broken" version to debug
+     2 = first fix (one year only, taller chart) -> 142 bars, readable, scrollable
+     3 = final (10 richest countries of 2007)    -> Norway should appear
+   Debug with STAGE = 1 first. Set STAGE = 3 before you submit. */
+const STAGE = 2;
+
+const margin = { top: 20, right: 40, bottom: 40, left: 110 };
+const width = 800;
+const BAR_SLOT = 22;   // pixels of height given to each country in stage 2
+
+// One colour per continent (same as Task 1)
+const continents = ["Africa", "Americas", "Asia", "Europe", "Oceania"];
+const color = d3.scaleOrdinal().domain(continents).range(d3.schemeTableau10);
+
+// Legend
+d3.select("#legend").selectAll("span").data(continents).join("span")
+  .html(d => `<i style="background:${color(d)}"></i>${d}`);
+
+d3.csv("dataset/gapminder.csv", d3.autoType).then(all => {
+  let data = all;                                           // STAGE 1: every row (1704)
+  if (STAGE >= 2) data = all.filter(d => d.year === 2007);  // one row per country (142)
+  if (STAGE === 3) {
+    data = data.sort((a, b) => d3.descending(a.gdpPercap, b.gdpPercap)).slice(0, 10);
+  }
+  // Sorting makes the long chart easier to read (richest at the top)
+  if (STAGE === 2) data.sort((a, b) => d3.descending(a.gdpPercap, b.gdpPercap));
+
+  // Height: fixed in stage 1, grows with the number of bars in stage 2
+  const height = STAGE === 1 ? 400 : STAGE === 2 ? data.length * BAR_SLOT + 60 : 450;
+  const innerW = width - margin.left - margin.right;
+  const innerH = height - margin.top - margin.bottom;
+
+  d3.select("#note").text(`STAGE ${STAGE}: ${data.length} rows -> ${data.length} <rect> elements` +
+    (STAGE === 2 ? " (scroll inside the box to see all countries)" : ""));
+
+  const svg = d3.select("#chart").attr("width", width).attr("height", height);
+  const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+  // Bar length = gdpPercap, scale from 0 to the largest income
+  const x = d3.scaleLinear()
+    .domain([0, d3.max(data, d => d.gdpPercap)])
+    .range([0, innerW]);
+
+  // Countries on the left
+  const y = d3.scaleBand()
+    .domain(data.map(d => d.country))
+    .range([0, innerH])
+    .padding(0.15);
+
+  // One <rect> per row, bars start at x = 0, coloured by continent
+  g.selectAll("rect")
+    .data(data)
+    .join("rect")
+    .attr("x", 0)
+    .attr("y", d => y(d.country))
+    .attr("width", d => x(d.gdpPercap))
+    .attr("height", y.bandwidth())
+    .attr("fill", d => color(d.continent))
+    .append("title")                       // hover shows the exact value
+    .text(d => `${d.country} (${d.continent}): ${d3.format(",.0f")(d.gdpPercap)}`);
+
+  g.append("g").attr("transform", `translate(0,${innerH})`)
+    .call(d3.axisBottom(x).ticks(6, ",.0f"));
+  g.append("g")
+    .call(d3.axisLeft(y).tickSize(0))
+    .selectAll("text").attr("font-size", 12);
+});
+
+/* ---------- Answers (check them against what YOU see in the tabs) ----------
+   Console : no red error (the code runs, the chart is just wrong)
+   Network : gapminder.csv, Status 200 (it loaded)
+   Elements: 1704 <rect>, each only a pixel or two tall
+
+   1. Expected 142 rects (one per country), got 1704, because the file has
+      142 countries x 12 years = 1704 rows and we drew one rect per ROW.
+      Many rows share the same country name, so the band scale also collapses
+      the duplicate names into 142 slots and the 12 bars per country overlap.
+   2. Each bar is about 2 px tall (400 px split among 142 slots), so the names
+      overlap and cannot be read.
+   3. After filtering to one year, making the SVG taller, sorting by income,
+      colouring by continent and putting it in a scrollable box, it is easy
+      to read.
+   4. Top 10: Norway is in the chart for 2007 (about 49,357). If it were missing,
+      the year filter would be missing or wrong.
+----------------------------------------------------------------------------- */
+</script>
+</body>
+</html>
