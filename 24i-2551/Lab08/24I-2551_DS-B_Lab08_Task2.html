@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>24I-2551_DS-B_Lab08_Task2 - Country Income Comparison &amp; Debugging</title>
+  <!-- Load D3.js v7 CDN -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 24px;
+      background-color: #f8fafc;
+      color: #1e293b;
+    }
+
+    /* Header Banner */
+    .header-box {
+      background: #ffffff;
+      padding: 16px 20px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .header-box h1 {
+      margin: 0 0 4px 0;
+      font-size: 20px;
+      color: #0f172a;
+    }
+
+    .header-box p {
+      margin: 0;
+      font-size: 13.5px;
+      color: #64748b;
+    }
+
+    .badge {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: bold;
+    }
+
+    /* Controls */
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      font-size: 13.5px;
+      font-weight: bold;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      color: #334155;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn:hover {
+      background: #e2e8f0;
+    }
+
+    .btn.active {
+      background: #2563eb;
+      color: #ffffff;
+      border-color: #2563eb;
+    }
+
+    /* Scrollable Container */
+    .scroll-wrapper {
+      max-height: 580px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      background: #ffffff;
+    }
+
+    .chart-card {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      margin-bottom: 20px;
+    }
+
+    /* Legend */
+    .legend {
+      display: flex;
+      gap: 16px;
+      margin-top: 14px;
+      font-size: 13px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .legend-dot {
+      width: 13px;
+      height: 13px;
+      border-radius: 3px;
+    }
+
+    /* Floating Tooltip */
+    #tooltip {
+      position: absolute;
+      display: none;
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      pointer-events: none;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+      z-index: 1000;
+      line-height: 1.45;
+    }
+
+    /* Comments Section Under the Code */
+    .comments-section {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 20px;
+    }
+
+    .comments-section h2 {
+      margin-top: 0;
+      font-size: 17px;
+      color: #0f172a;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 6px;
+    }
+
+    .comment-block {
+      background: #f8fafc;
+      border-left: 4px solid #2563eb;
+      padding: 10px 14px;
+      margin-bottom: 10px;
+      font-size: 13.5px;
+      line-height: 1.5;
+    }
+
+    .comment-block code {
+      background: #e2e8f0;
+      padding: 2px 4px;
+      border-radius: 3px;
+      font-family: Consolas, monospace;
+    }
+
+    table.devtools-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0;
+      font-size: 13px;
+    }
+
+    table.devtools-table th, table.devtools-table td {
+      border: 1px solid #cbd5e1;
+      padding: 8px 12px;
+      text-align: left;
+    }
+
+    table.devtools-table th {
+      background: #f1f5f9;
+      color: #0f172a;
+    }
+
+    .axis text {
+      font-size: 11px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header Banner -->
+  <div class="header-box">
+    <div>
+      <h1>DVA Lab 8 - Task 2: Country Income Comparison &amp; Debugging</h1>
+      <p>UN Scenario: Compare countries by income. Draw one bar for each country.</p>
+    </div>
+    <div class="badge">
+      Roll No: 24I-2551 | Section: DS-(B)
+    </div>
+  </div>
+
+  <!-- View Mode Controls -->
+  <div class="controls">
+    <span><strong>Display Mode:</strong></span>
+    <button id="btn-all" class="btn active" onclick="setMode('all')">All 142 Countries (Fixed &amp; Scrollable)</button>
+    <button id="btn-unfixed" class="btn" onclick="setMode('unfixed')">Initial Unfixed / Debug View (1,704 Rects)</button>
+    <button id="btn-top10" class="btn" onclick="setMode('top10')">Top 10 Richest Countries (2007)</button>
+  </div>
+
+  <!-- Chart Card -->
+  <div class="chart-card">
+    <div class="scroll-wrapper" id="scroll-container">
+      <svg id="chart"></svg>
+    </div>
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <!-- Tooltip -->
+  <div id="tooltip"></div>
+
+  <!-- Developer Tools Diagnostic & Questions Under the Chart -->
+  <div class="comments-section">
+    <h2>Task 2: Developer Tools Diagnostic &amp; Reflection Answers</h2>
+
+    <h3>1. Browser Developer Tools Diagnostic (The Three Tabs)</h3>
+    <table class="devtools-table">
+      <thead>
+        <tr>
+          <th>Tab</th>
+          <th>Action Taken</th>
+          <th>Observation &amp; Answer</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Console</strong></td>
+          <td>Press <code>F12</code>, press <code>Ctrl+R</code></td>
+          <td><strong>Is there a red message?</strong> No. There are no runtime errors. However, logging <code>data.length</code> shows <strong>1,704 rows</strong> loaded instead of 142!</td>
+        </tr>
+        <tr>
+          <td><strong>Network</strong></td>
+          <td>Press <code>Ctrl+R</code> with Network tab open</td>
+          <td><strong>Did gapminder.csv load?</strong> Yes. <code>gapminder.csv</code> returns <strong>Status 200 (OK)</strong> (~85 KB transferred).</td>
+        </tr>
+        <tr>
+          <td><strong>Elements</strong></td>
+          <td>Expand <code>&lt;svg&gt;</code>, click one <code>&lt;rect&gt;</code></td>
+          <td><strong>How many &lt;rect&gt; are there? How big is its height?</strong> There are exactly <strong>1,704 &lt;rect&gt;</strong> elements. Each bar height is only <strong>~2.2 pixels</strong> (<code>y.bandwidth()</code>).</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>2. Reflection Questions &amp; Answers (One Sentence Each)</h3>
+    <div class="comment-block">
+      <strong>Q1: How many &lt;rect&gt; did you expect? How many did you get? Why?</strong><br>
+      We expected 142 &lt;rect&gt; elements (one per country), but got 1,704 &lt;rect&gt; elements because the raw dataset contains 12 survey years per country and was not filtered down to a single year.
+    </div>
+
+    <div class="comment-block">
+      <strong>Q2: How tall is one bar? Can you read the names?</strong><br>
+      Each bar is only about 2.2 pixels tall (<code>y.bandwidth()</code>), and the 142 country names are completely illegible because they overlap each other into a solid black smudge.
+    </div>
+
+    <div class="comment-block">
+      <strong>Q3: After your first fix, is the chart easy to read? What would you change?</strong><br>
+      After filtering data to 2007 (142 rows), the chart is still very cramped in a 500px window; to make it readable, we wrapped the SVG in a fixed-height scrollable container (<code>max-height: 580px; overflow-y: auto</code>) with an expanded SVG height (~3,500px) so each country receives ~22px height.
+    </div>
+
+    <div class="comment-block">
+      <strong>Q4: Now show the 10 richest countries. Is Norway in your chart? If not, what is missing?</strong><br>
+      Yes, Norway is first ($49,357) once the data is sorted descending by <code>gdpPercap</code> and sliced to the top 10 (<code>.sort((a,b) =&gt; b.gdpPercap - a.gdpPercap).slice(0, 10)</code>), which was missing in the raw comparison.
+    </div>
+  </div>
+
+  <script>
+    // --- 1. Continent Color Palette (Vibrant Modern Palette) ---
+    const continentColors = {
+      "Europe": "#2563eb",   // Royal Blue
+      "Asia": "#f59e0b",     // Amber
+      "Americas": "#ef4444", // Crimson
+      "Africa": "#10b981",   // Emerald
+      "Oceania": "#8b5cf6"   // Purple
+    };
+
+    const legendContainer = d3.select("#legend");
+    legendContainer.append("span").html("<strong>Continents:</strong>");
+    Object.entries(continentColors).forEach(([continent, color]) => {
+      legendContainer.append("div")
+        .attr("class", "legend-item")
+        .html(`<span class="legend-dot" style="background-color: ${color}"></span><span>${continent}</span>`);
+    });
+
+    const tooltip = d3.select("#tooltip");
+    let allData = [];
+
+    // --- 2. Load Dataset ---
+    d3.csv("dataset/gapminder.csv", d3.autoType)
+      .catch(() => d3.csv("gapminder.csv", d3.autoType))
+      .then(data => {
+        allData = data;
+        renderChart("all");
+      });
+
+    function setMode(mode) {
+      d3.select("#btn-all").classed("active", mode === "all");
+      d3.select("#btn-unfixed").classed("active", mode === "unfixed");
+      d3.select("#btn-top10").classed("active", mode === "top10");
+      renderChart(mode);
+    }
+
+    function renderChart(mode) {
+      if (!allData.length) return;
+
+      const svg = d3.select("#chart");
+      svg.selectAll("*").remove();
+
+      const scrollContainer = document.getElementById("scroll-container");
+      scrollContainer.scrollTop = 0;
+
+      if (mode === "unfixed") {
+        // --- Unfixed Initial State (Renders all 1,704 rows in 500px) ---
+        const margin = { top: 20, right: 30, bottom: 40, left: 110 };
+        const width = 800;
+        const height = 500;
+        const innerW = width - margin.left - margin.right;
+        const innerH = height - margin.top - margin.bottom;
+
+        svg.attr("width", width).attr("height", height);
+        const g = svg.append("g").attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+        const x = d3.scaleLinear()
+          .domain([0, d3.max(allData, d => d.gdpPercap)])
+          .range([0, innerW]);
+
+        const y = d3.scaleBand()
+          .domain(allData.map(d => d.country))
+          .range([0, innerH])
+          .padding(0.1);
+
+        g.append("g").attr("transform", `translate(0, ${innerH})`).call(d3.axisBottom(x));
+        g.append("g").call(d3.axisLeft(y));
+
+        g.selectAll("rect")
+          .data(allData)
+          .join("rect")
+          .attr("x", 0)
+          .attr("y", d => y(d.country))
+          .attr("width", d => x(d.gdpPercap))
+          .attr("height", y.bandwidth())
+          .attr("fill", "#2563eb")
+          .attr("opacity", 0.4);
+
+      } else {
+        // --- Fixed Version (Scrollable 142 Countries or Top 10) ---
+        const data2007 = allData.filter(d => d.year === 2007);
+        let displayData = [];
+        let barHeight = 22;
+
+        if (mode === "all") {
+          displayData = [...data2007].sort((a, b) => b.gdpPercap - a.gdpPercap);
+        } else {
+          displayData = [...data2007].sort((a, b) => b.gdpPercap - a.gdpPercap).slice(0, 10);
+          barHeight = 32;
+        }
+
+        const margin = { top: 30, right: 40, bottom: 40, left: 140 };
+        const width = 840;
+        const height = (displayData.length * barHeight) + margin.top + margin.bottom;
+        const innerW = width - margin.left - margin.right;
+        const innerH = height - margin.top - margin.bottom;
+
+        svg.attr("width", width).attr("height", height);
+        const g = svg.append("g").attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+        const x = d3.scaleLinear()
+          .domain([0, d3.max(displayData, d => d.gdpPercap)])
+          .nice()
+          .range([0, innerW]);
+
+        const y = d3.scaleBand()
+          .domain(displayData.map(d => d.country))
+          .range([0, innerH])
+          .padding(0.18);
+
+        // Bottom & Top Axes
+        g.append("g").attr("transform", `translate(0, ${innerH})`)
+          .call(d3.axisBottom(x).ticks(8).tickFormat(d => "$" + d3.format(",")(d)));
+
+        g.append("g")
+          .call(d3.axisTop(x).ticks(8).tickFormat(d => "$" + d3.format(",")(d)));
+
+        g.append("g").call(d3.axisLeft(y));
+
+        g.selectAll(".bar")
+          .data(displayData, d => d.country)
+          .join("rect")
+          .attr("class", "bar")
+          .attr("x", 0)
+          .attr("y", d => y(d.country))
+          .attr("height", y.bandwidth())
+          .attr("width", d => x(d.gdpPercap))
+          .attr("fill", d => continentColors[d.continent] || "#6b7280")
+          .attr("rx", 2)
+          .on("mouseover", (event, d) => {
+            d3.select(event.currentTarget).style("opacity", 0.75);
+            tooltip.style("display", "block")
+              .html(`<strong>${d.country}</strong><br/>Continent: ${d.continent}<br/>GDP per capita: $${Math.round(d.gdpPercap).toLocaleString()}`);
+          })
+          .on("mousemove", (event) => {
+            tooltip
+              .style("left", (event.pageX + 14) + "px")
+              .style("top", (event.pageY - 16) + "px");
+          })
+          .on("mouseout", (event) => {
+            d3.select(event.currentTarget).style("opacity", 1.0);
+            tooltip.style("display", "none");
+          });
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Data Analysis &amp; Visualization - Lab 9</title>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- D3.js v7 -->
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+
+  <style>
+    :root {
+      --card-bg: #ffffff;
+      --body-bg: #f8fafc;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --accent-hub: #f43f5e;
+      --accent-nonhub: #94a3b8;
+    }
+
+    body {
+      background-color: var(--body-bg);
+      color: var(--text-main);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* Page load fade-in animation */
+    .fade-in {
+      animation: fadeInPage 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes fadeInPage {
+      from {
+        opacity: 0;
+        transform: translateY(14px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Modern interactive card elevation effect */
+    .chart-card {
+      background: var(--card-bg);
+      border: 1px solid rgba(226, 232, 240, 0.85);
+      border-radius: 1rem;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .chart-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 14px 28px rgba(15, 23, 42, 0.08) !important;
+    }
+
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .card-subtitle {
+      font-size: 0.84rem;
+      color: var(--text-muted);
+    }
+
+    /* Strict SVG containers with overflow hidden to prevent any graphic bleeding */
+    .svg-container {
+      width: 100%;
+      height: 380px;
+      position: relative;
+      overflow: hidden !important;
+      border-radius: 8px;
+      background-color: #fafbfc;
+      border: 1px solid #f1f5f9;
+    }
+
+    svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      overflow: hidden !important;
+    }
+
+    /* Shared floating tooltip */
+    #tooltip {
+      position: absolute;
+      pointer-events: none;
+      opacity: 0;
+      background: rgba(15, 23, 42, 0.94);
+      color: #ffffff;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      line-height: 1.45;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+      transition: opacity 0.15s ease-out;
+      z-index: 2000;
+      backdrop-filter: blur(4px);
+    }
+
+    /* Legend items */
+    .legend-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-right: 12px;
+    }
+
+    .legend-color-dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 3px;
+      display: inline-block;
+    }
+
+    .legend-color-circle {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    /* Gradient bar for choropleth legend */
+    .choropleth-gradient-bar {
+      width: 130px;
+      height: 10px;
+      border-radius: 5px;
+      background: linear-gradient(to right, #dbeafe, #1e3a8a);
+      display: inline-block;
+    }
+  </style>
+</head>
+<body class="bg-light">
+
+  <!-- Header -->
+  <header class="py-4 mb-4 border-bottom bg-white shadow-xs">
+    <div class="container-fluid px-md-5">
+      <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div>
+          <span class="badge bg-primary-subtle text-primary mb-2 px-3 py-1 rounded-pill fw-semibold">
+            DAV Lab 9
+          </span>
+          <h1 class="h3 fw-bold mb-0 text-dark">Hierarchical, Network &amp; Geospatial Visualizations</h1>
+          <p class="text-muted small mb-0 mt-1">
+            Complete D3.js (v7) solution implementing Treemaps, Dendrograms, Force-Directed Networks, and Geospatial Maps.
+          </p>
+        </div>
+        <div class="text-muted small text-md-end">
+          <span class="badge bg-light text-secondary border px-3 py-2 rounded-3">
+            Single-File D3.js &bull; Bootstrap 5
+          </span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Grid -->
+  <main class="container-fluid px-md-5 pb-5 fade-in">
+    <div class="row g-4">
+
+      <!-- TASK 1: Treemap -->
+      <div class="col-12 col-xl-6">
+        <div class="card chart-card shadow-sm h-100 p-3 p-md-4">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <div>
+              <span class="badge bg-info-subtle text-info-emphasis rounded-pill px-2 py-1 mb-1 fw-semibold">Task 1</span>
+              <h2 class="card-title mb-1">Task 1: Course Enrollment Treemap</h2>
+              <p class="card-subtitle mb-0">Area represents students enrolled &bull; Grouped and colored by department</p>
+            </div>
+          </div>
+
+          <!-- Color Legend -->
+          <div class="d-flex flex-wrap align-items-center mt-2 mb-3">
+            <span class="legend-badge">
+              <span class="legend-color-dot" style="background-color: #93c5fd;"></span> Comp Science
+            </span>
+            <span class="legend-badge">
+              <span class="legend-color-dot" style="background-color: #86efac;"></span> Engineering
+            </span>
+            <span class="legend-badge">
+              <span class="legend-color-dot" style="background-color: #fed7aa;"></span> Business
+            </span>
+            <span class="legend-badge">
+              <span class="legend-color-dot" style="background-color: #c4b5fd;"></span> Sciences
+            </span>
+          </div>
+
+          <!-- Chart Area -->
+          <div class="svg-container">
+            <svg id="treemap-svg" viewBox="0 0 600 380"></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- TASK 2: Dendrogram -->
+      <div class="col-12 col-xl-6">
+        <div class="card chart-card shadow-sm h-100 p-3 p-md-4">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <div>
+              <span class="badge bg-primary-subtle text-primary rounded-pill px-2 py-1 mb-1 fw-semibold">Task 2</span>
+              <h2 class="card-title mb-1">Task 2: University Structure Dendrogram</h2>
+              <p class="card-subtitle mb-0">Horizontal tree with curved links &bull; Click department nodes to collapse/expand courses</p>
+            </div>
+          </div>
+
+          <!-- Color Legend -->
+          <div class="d-flex flex-wrap align-items-center mt-2 mb-3">
+            <span class="legend-badge">
+              <span class="legend-color-circle" style="background-color: #475569;"></span> Root (University)
+            </span>
+            <span class="legend-badge">
+              <span class="legend-color-circle" style="background-color: #3b82f6;"></span> Branch (Department)
+            </span>
+            <span class="legend-badge">
+              <span class="legend-color-circle" style="background-color: #10b981;"></span> Leaf (Course)
+            </span>
+          </div>
+
+          <!-- Chart Area -->
+          <div class="svg-container">
+            <svg id="dendrogram-svg" viewBox="0 0 600 380"></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- TASK 3: Force-Directed Network -->
+      <div class="col-12 col-xl-6">
+        <div class="card chart-card shadow-sm h-100 p-3 p-md-4">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <div>
+              <span class="badge bg-success-subtle text-success rounded-pill px-2 py-1 mb-1 fw-semibold">Task 3</span>
+              <h2 class="card-title mb-1">Task 3: Flight Route Network</h2>
+              <p class="card-subtitle mb-0">Radius = degree (routes) &bull; Thickness = weekly flights &bull; Draggable &bull; Hover city to highlight</p>
+            </div>
+          </div>
+
+          <!-- Legend info -->
+          <div class="d-flex flex-wrap align-items-center mt-2 mb-3 text-muted small">
+            <span class="me-3"><strong class="text-dark">Node Size:</strong> Route count</span>
+            <span class="me-3"><strong class="text-dark">Line Width:</strong> Flights per week</span>
+            <span><strong class="text-dark">Interactivity:</strong> Drag nodes, hover to isolate</span>
+          </div>
+
+          <!-- Chart Area -->
+          <div class="svg-container">
+            <svg id="network-svg" viewBox="0 0 600 380"></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- TASK 4: World Population Choropleth -->
+      <div class="col-12 col-xl-6">
+        <div class="card chart-card shadow-sm h-100 p-3 p-md-4">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <div>
+              <span class="badge bg-warning-subtle text-warning-emphasis rounded-pill px-2 py-1 mb-1 fw-semibold">Task 4</span>
+              <h2 class="card-title mb-1">Task 4: World Population Choropleth</h2>
+              <p class="card-subtitle mb-0">Natural Earth projection &bull; Square-root sequential scale &bull; Hover to highlight country border</p>
+            </div>
+          </div>
+
+          <!-- Color Legend -->
+          <div class="d-flex flex-wrap align-items-center mt-2 mb-3 small text-muted">
+            <span class="me-2">0M</span>
+            <span class="choropleth-gradient-bar me-2"></span>
+            <span class="me-4">1,430M</span>
+            <span class="legend-badge">
+              <span class="legend-color-dot" style="background-color: #e2e8f0;"></span> Missing / No Data
+            </span>
+          </div>
+
+          <!-- Chart Area -->
+          <div class="svg-container">
+            <svg id="choropleth-svg" viewBox="0 0 600 380"></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- TASK 5: Pakistan Cities Point Map -->
+      <div class="col-12 col-xl-6">
+        <div class="card chart-card shadow-sm h-100 p-3 p-md-4">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <div>
+              <span class="badge bg-danger-subtle text-danger rounded-pill px-2 py-1 mb-1 fw-semibold">Task 5</span>
+              <h2 class="card-title mb-1">Task 5: Pakistan Cities Point Map</h2>
+              <p class="card-subtitle mb-0">Mercator projection centered on Pakistan &bull; Radius scaled by population &bull; Cities &ge; 1M labeled</p>
+            </div>
+          </div>
+
+          <!-- Legend info -->
+          <div class="d-flex flex-wrap align-items-center mt-2 mb-3 small text-muted">
+            <span class="legend-badge">
+              <span class="legend-color-circle" style="background-color: #0284c7; opacity: 0.7;"></span> Semi-transparent point (Area &prop; Population)
+            </span>
+            <span>Major cities labeled &bull; Tooltip for all</span>
+          </div>
+
+          <!-- Chart Area -->
+          <div class="svg-container">
+            <svg id="pointmap-svg" viewBox="0 0 600 380"></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- TASK 6: Combined Spatial Encoding -->
+      <div class="col-12 col-xl-6">
+        <div class="card chart-card shadow-sm h-100 p-3 p-md-4">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <div>
+              <span class="badge bg-secondary-subtle text-secondary-emphasis rounded-pill px-2 py-1 mb-1 fw-semibold">Task 6</span>
+              <h2 class="card-title mb-1">Task 6: Combined Spatial Encoding</h2>
+              <p class="card-subtitle mb-0">Flight routes drawn under city nodes &bull; Hover city to highlight connected routes and dim others</p>
+            </div>
+          </div>
+
+          <!-- Complete 4-variable Legend -->
+          <div class="d-flex flex-wrap align-items-center mt-2 mb-3 small text-muted gap-2">
+            <span class="legend-badge">
+              <strong class="text-dark">1. Position:</strong> Coordinates
+            </span>
+            <span class="legend-badge">
+              <strong class="text-dark">2. Size:</strong> Population
+            </span>
+            <span class="legend-badge">
+              <span class="legend-color-circle" style="background-color: var(--accent-hub);"></span> <strong class="text-dark">3. Hub (4+ routes)</strong>
+            </span>
+            <span class="legend-badge">
+              <span class="legend-color-circle" style="background-color: var(--accent-nonhub);"></span> Non-Hub (&lt;4)
+            </span>
+            <span class="legend-badge">
+              <strong class="text-dark">4. Line Width:</strong> Weekly Flights
+            </span>
+          </div>
+
+          <!-- Chart Area -->
+          <div class="svg-container">
+            <svg id="combined-svg" viewBox="0 0 600 380"></svg>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Single shared floating tooltip -->
+  <div id="tooltip"></div>
+
+  <!-- D3.js Application Script -->
+  <script>
+    // Global Tooltip Handlers
+    const tooltip = d3.select("#tooltip");
+
+    function showTooltip(event, htmlContent) {
+      tooltip
+        .html(htmlContent)
+        .style("opacity", 1)
+        .style("left", (event.pageX + 14) + "px")
+        .style("top", (event.pageY - 28) + "px");
+    }
+
+    function moveTooltip(event) {
+      tooltip
+        .style("left", (event.pageX + 14) + "px")
+        .style("top", (event.pageY - 28) + "px");
+    }
+
+    function hideTooltip() {
+      tooltip.style("opacity", 0);
+    }
+
+    // Shared Promise for custom.geo.json to prevent duplicate 4MB downloads/parses
+    const worldGeoPromise = d3.json('custom.geo.json');
+
+
+    /* ==========================================================
+       TASK 1: Course Enrollment Treemap
+       ========================================================== */
+    d3.csv('university.csv', d3.autoType).then(data => {
+      const width = 600, height = 380;
+      const svg = d3.select("#treemap-svg");
+
+      // Group by department
+      const grouped = d3.group(data, d => d.department);
+      const rootData = {
+        name: "University",
+        children: Array.from(grouped, ([dept, courses]) => ({
+          name: dept,
+          children: courses
+        }))
+      };
+
+      const root = d3.hierarchy(rootData)
+        .sum(d => d.students)
+        .sort((a, b) => b.value - a.value);
+
+      d3.treemap()
+        .size([width, height])
+        .paddingInner(3)
+        .paddingOuter(4)
+        .round(true)(root);
+
+      const deptColors = d3.scaleOrdinal()
+        .domain(["Computer Science", "Engineering", "Business", "Sciences"])
+        .range(["#93c5fd", "#86efac", "#fed7aa", "#c4b5fd"]);
+
+      const nodes = svg.selectAll("g")
+        .data(root.leaves())
+        .join("g")
+        .attr("transform", d => `translate(${d.x0},${d.y0})`);
+
+      // Rectangle
+      nodes.append("rect")
+        .attr("width", d => Math.max(0, d.x1 - d.x0))
+        .attr("height", d => Math.max(0, d.y1 - d.y0))
+        .attr("fill", d => deptColors(d.data.department))
+        .attr("rx", 4)
+        .attr("stroke", "#ffffff")
+        .attr("stroke-width", 2)
+        .style("cursor", "pointer")
+        .on("mouseenter", function(e, d) {
+          d3.select(this).attr("stroke", "#0f172a").attr("stroke-width", 2.5);
+          showTooltip(e, `
+            <div class="fw-bold mb-1">${d.data.course}</div>
+            <div>Department: <strong>${d.data.department}</strong></div>
+            <div>Students: <strong>${d.data.students}</strong></div>
+          `);
+        })
+        .on("mousemove", moveTooltip)
+        .on("mouseleave", function() {
+          d3.select(this).attr("stroke", "#ffffff").attr("stroke-width", 2);
+          hideTooltip();
+        });
+
+      // Individual clipPath to guarantee text never overflows its rectangle
+      nodes.append("clipPath")
+        .attr("id", (d, i) => `clip-cell-${i}`)
+        .append("rect")
+        .attr("width", d => Math.max(0, d.x1 - d.x0 - 6))
+        .attr("height", d => Math.max(0, d.y1 - d.y0 - 4));
+
+      // Course name labels
+      nodes.append("text")
+        .attr("clip-path", (d, i) => `url(#clip-cell-${i})`)
+        .attr("x", 6)
+        .attr("y", 18)
+        .text(d => d.data.course)
+        .attr("font-size", "11px")
+        .attr("font-weight", "600")
+        .attr("fill", "#0f172a")
+        .attr("pointer-events", "none");
+
+      // Enrollment count labels
+      nodes.append("text")
+        .attr("clip-path", (d, i) => `url(#clip-cell-${i})`)
+        .attr("x", 6)
+        .attr("y", 32)
+        .text(d => (d.y1 - d.y0 > 36) ? `${d.data.students} students` : "")
+        .attr("font-size", "10px")
+        .attr("fill", "#475569")
+        .attr("pointer-events", "none");
+    }).catch(err => console.error("Task 1 error:", err));
+
+
+    /* ==========================================================
+       TASK 2: University Structure Dendrogram
+       ========================================================== */
+    d3.csv('university.csv', d3.autoType).then(data => {
+      const width = 600, height = 380;
+      const margin = { top: 25, right: 140, bottom: 25, left: 80 };
+      const innerW = width - margin.left - margin.right;
+      const innerH = height - margin.top - margin.bottom;
+
+      const svg = d3.select("#dendrogram-svg");
+
+      const g = svg.append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+      const linkGroup = g.append("g").attr("class", "links");
+      const nodeGroup = g.append("g").attr("class", "nodes");
+
+      const grouped = d3.group(data, d => d.department);
+      const rootData = {
+        name: "University",
+        children: Array.from(grouped, ([dept, courses]) => ({
+          name: dept,
+          children: courses.map(c => ({ name: c.course, students: c.students }))
+        }))
+      };
+
+      const root = d3.hierarchy(rootData);
+
+      // Depth colors: 0 (root), 1 (department), 2 (course)
+      const depthColors = d3.scaleOrdinal()
+        .domain([0, 1, 2])
+        .range(["#475569", "#3b82f6", "#10b981"]);
+
+      const cluster = d3.cluster().size([innerH, innerW]);
+
+      function update() {
+        cluster(root);
+
+        const links = root.links();
+        const linkGenerator = d3.linkHorizontal()
+          .x(d => d.y)
+          .y(d => d.x);
+
+        linkGroup.selectAll("path")
+          .data(links, d => `${d.source.data.name}->${d.target.data.name}`)
+          .join(
+            enter => enter.append("path")
+              .attr("fill", "none")
+              .attr("stroke", "#cbd5e1")
+              .attr("stroke-width", 1.8)
+              .attr("d", linkGenerator),
+            update => update.transition().duration(350).attr("d", linkGenerator),
+            exit => exit.remove()
+          );
+
+        const nodesData = root.descendants();
+
+        const node = nodeGroup.selectAll("g")
+          .data(nodesData, d => d.data.name)
+          .join(
+            enter => {
+              const el = enter.append("g")
+                .attr("transform", d => `translate(${d.y},${d.x})`)
+                .style("cursor", d => (d.children || d._children) ? "pointer" : "default");
+
+              el.append("circle")
+                .attr("r", d => d.depth === 0 ? 8 : (d.depth === 1 ? 7 : 5))
+                .attr("fill", d => depthColors(d.depth))
+                .attr("stroke", "#ffffff")
+                .attr("stroke-width", 2);
+
+              el.append("text")
+                .attr("dy", "0.32em")
+                .attr("x", d => (d.children || d._children) ? -12 : 12)
+                .attr("text-anchor", d => (d.children || d._children) ? "end" : "start")
+                .text(d => d.data.name)
+                .attr("font-size", "11px")
+                .attr("font-weight", d => d.depth < 2 ? "600" : "400")
+                .attr("fill", "#1e293b");
+
+              return el;
+            },
+            update => update.transition().duration(350)
+              .attr("transform", d => `translate(${d.y},${d.x})`),
+            exit => exit.remove()
+          );
+
+        // Click to collapse / expand department branches
+        node.on("click", (event, d) => {
+          if (d.depth === 1) {
+            if (d.children) {
+              d._children = d.children;
+              d.children = null;
+            } else if (d._children) {
+              d.children = d._children;
+              d._children = null;
+            }
+            update();
+          }
+        });
+
+        node.on("mouseenter", (e, d) => {
+          const typeStr = d.depth === 0 ? "Root Institution" : (d.depth === 1 ? "Department (Click to toggle)" : "Course");
+          showTooltip(e, `
+            <strong>${d.data.name}</strong><br/>
+            Level: <strong>${typeStr}</strong><br/>
+            ${d.data.students ? `Students: <strong>${d.data.students}</strong>` : ""}
+          `);
+        })
+        .on("mousemove", moveTooltip)
+        .on("mouseleave", hideTooltip);
+      }
+
+      update();
+    }).catch(err => console.error("Task 2 error:", err));
+
+
+    /* ==========================================================
+       TASK 3: Force-Directed Network
+       ========================================================== */
+    d3.csv('flights.csv', d3.autoType).then(flightsData => {
+      const width = 600, height = 380;
+      const svg = d3.select("#network-svg");
+
+      // Compute degrees (number of connected routes) for each city
+      const degreeMap = new Map();
+      flightsData.forEach(d => {
+        degreeMap.set(d.source, (degreeMap.get(d.source) || 0) + 1);
+        degreeMap.set(d.target, (degreeMap.get(d.target) || 0) + 1);
+      });
+
+      const nodes = Array.from(degreeMap.entries()).map(([id, degree]) => ({ id, degree }));
+      const links = flightsData.map(d => ({ source: d.source, target: d.target, flights: +d.flights }));
+
+      const rScale = d3.scaleLinear()
+        .domain(d3.extent(nodes, d => d.degree))
+        .range([9, 22]);
+
+      const strokeScale = d3.scaleLinear()
+        .domain(d3.extent(links, d => d.flights))
+        .range([1.5, 6]);
+
+      const link = svg.append("g")
+        .attr("class", "links")
+        .selectAll("line")
+        .data(links)
+        .join("line")
+        .attr("stroke", "#94a3b8")
+        .attr("stroke-opacity", 0.6)
+        .attr("stroke-width", d => strokeScale(d.flights));
+
+      const simulation = d3.forceSimulation(nodes)
+        .force("link", d3.forceLink(links).id(d => d.id).distance(90))
+        .force("charge", d3.forceManyBody().strength(-280))
+        .force("center", d3.forceCenter(width / 2, height / 2))
+        .force("collide", d3.forceCollide(d => rScale(d.degree) + 14));
+
+      const node = svg.append("g")
+        .attr("class", "nodes")
+        .selectAll("g")
+        .data(nodes)
+        .join("g")
+        .style("cursor", "grab")
+        .call(d3.drag()
+          .on("start", (event, d) => {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+          })
+          .on("drag", (event, d) => {
+            d.fx = event.x;
+            d.fy = event.y;
+          })
+          .on("end", (event, d) => {
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+          }));
+
+      node.append("circle")
+        .attr("r", d => rScale(d.degree))
+        .attr("fill", "#6366f1")
+        .attr("stroke", "#ffffff")
+        .attr("stroke-width", 2);
+
+      node.append("text")
+        .attr("dy", 4)
+        .attr("text-anchor", "middle")
+        .attr("font-size", "10px")
+        .attr("font-weight", "600")
+        .attr("fill", "#0f172a")
+        .attr("paint-order", "stroke")
+        .attr("stroke", "#ffffff")
+        .attr("stroke-width", 3)
+        .text(d => d.id);
+
+      // Hover to highlight connected routes & fade others
+      node.on("mouseenter", (e, d) => {
+        link.transition().duration(150)
+          .attr("stroke", l => (l.source.id === d.id || l.target.id === d.id) ? "#ef4444" : "#cbd5e1")
+          .attr("stroke-opacity", l => (l.source.id === d.id || l.target.id === d.id) ? 1 : 0.1);
+
+        node.transition().duration(150)
+          .attr("opacity", n => {
+            if (n.id === d.id) return 1;
+            const connected = links.some(l => 
+              (l.source.id === d.id && l.target.id === n.id) || 
+              (l.target.id === d.id && l.source.id === n.id)
+            );
+            return connected ? 1 : 0.25;
+          });
+
+        showTooltip(e, `
+          <strong>${d.id}</strong><br/>
+          Connected Routes (Degree): <strong>${d.degree}</strong>
+        `);
+      })
+      .on("mousemove", moveTooltip)
+      .on("mouseleave", () => {
+        link.transition().duration(150)
+          .attr("stroke", "#94a3b8")
+          .attr("stroke-opacity", 0.6);
+        node.transition().duration(150)
+          .attr("opacity", 1);
+        hideTooltip();
+      });
+
+      link.on("mouseenter", (e, d) => {
+        showTooltip(e, `
+          <strong>${d.source.id} &harr; ${d.target.id}</strong><br/>
+          Flights: <strong>${d.flights} per week</strong>
+        `);
+      })
+      .on("mousemove", moveTooltip)
+      .on("mouseleave", hideTooltip);
+
+      simulation.on("tick", () => {
+        link
+          .attr("x1", d => d.source.x)
+          .attr("y1", d => d.source.y)
+          .attr("x2", d => d.target.x)
+          .attr("y2", d => d.target.y);
+
+        // Clamping to keep nodes inside SVG
+        node.attr("transform", d => {
+          d.x = Math.max(25, Math.min(width - 25, d.x));
+          d.y = Math.max(25, Math.min(height - 25, d.y));
+          return `translate(${d.x},${d.y})`;
+        });
+      });
+    }).catch(err => console.error("Task 3 error:", err));
+
+
+    /* ==========================================================
+       TASK 4: World Population Choropleth
+       ========================================================== */
+    Promise.all([
+      worldGeoPromise,
+      d3.csv('population.csv', d3.autoType)
+    ]).then(([geoData, popData]) => {
+      const width = 600, height = 380;
+      const svg = d3.select("#choropleth-svg");
+
+      // Map country ID and names to population
+      const popMap = new Map();
+      popData.forEach(d => {
+        popMap.set(d.id, +d.population_millions);
+        popMap.set(d.country, +d.population_millions);
+      });
+
+      const maxPop = d3.max(popData, d => +d.population_millions); // 1430
+
+      // Sequential square-root color scale
+      const colorScale = d3.scaleSqrt()
+        .domain([0, maxPop])
+        .range(["#dbeafe", "#1e3a8a"]);
+
+      const projection = d3.geoNaturalEarth1()
+        .fitExtent([[15, 10], [width - 15, height - 10]], geoData);
+      const path = d3.geoPath().projection(projection);
+
+      function getPop(f) {
+        const p = f.properties;
+        return popMap.get(p.iso_a3) ??
+               popMap.get(p.adm0_a3) ??
+               popMap.get(p.iso_a3_eh) ??
+               popMap.get(p.sov_a3) ??
+               popMap.get(p.name);
+      }
+
+      svg.append("g")
+        .selectAll("path")
+        .data(geoData.features)
+        .join("path")
+        .attr("d", path)
+        .attr("fill", d => {
+          const val = getPop(d);
+          return val !== undefined ? colorScale(val) : "#e2e8f0"; // light gray for missing
+        })
+        .attr("stroke", "#ffffff")
+        .attr("stroke-width", 0.5)
+        .style("cursor", "pointer")
+        .on("mouseenter", function(e, d) {
+          d3.select(this)
+            .attr("stroke", "#f97316") // highlight border on hover
+            .attr("stroke-width", 2)
+            .raise();
+
+          const val = getPop(d);
+          showTooltip(e, `
+            <strong>${d.properties.name}</strong><br/>
+            Population: <strong>${val !== undefined ? val + " Million" : "No data"}</strong>
+          `);
+        })
+        .on("mousemove", moveTooltip)
+        .on("mouseleave", function() {
+          d3.select(this)
+            .attr("stroke", "#ffffff")
+            .attr("stroke-width", 0.5);
+          hideTooltip();
+        });
+    }).catch(err => console.error("Task 4 error:", err));
+
+
+    /* ==========================================================
+       TASK 5: Pakistan Cities Point Map
+       ========================================================== */
+    Promise.all([
+      worldGeoPromise,
+      d3.csv('pakistan_cities.csv', d3.autoType)
+    ]).then(([geoData, cities]) => {
+      const width = 600, height = 380;
+      const svg = d3.select("#pointmap-svg");
+
+      const pakFeature = geoData.features.find(f => f.properties.iso_a3 === 'PAK' || f.properties.name === 'Pakistan');
+      const projection = d3.geoMercator()
+        .fitExtent([[40, 25], [width - 40, height - 25]], pakFeature);
+      const path = d3.geoPath().projection(projection);
+
+      // Draw ONLY Pakistan boundary (prevents world map distortion & canvas overflow)
+      svg.append("path")
+        .datum(pakFeature)
+        .attr("d", path)
+        .attr("fill", "#f1f5f9")
+        .attr("stroke", "#64748b")
+        .attr("stroke-width", 1.5);
+
+      // Square-root radius scale
+      const maxPop = d3.max(cities, d => +d.pop);
+      const rScale = d3.scaleSqrt()
+        .domain([0, maxPop])
+        .range([4, 22]);
+
+      // Semi-transparent city points
+      svg.append("g")
+        .selectAll("circle")
+        .data(cities)
+        .join("circle")
+        .attr("cx", d => projection([+d.lon, +d.lat])[0])
+        .attr("cy", d => projection([+d.lon, +d.lat])[1])
+        .attr("r", d => rScale(+d.pop))
+        .attr("fill", "#0284c7")
+        .attr("fill-opacity", 0.6)
+        .attr("stroke", "#0369a1")
+        .attr("stroke-width", 1.5)
+        .style("cursor", "pointer")
+        .on("mouseenter", function(e, d) {
+          d3.select(this).attr("fill-opacity", 0.9).attr("stroke", "#082f49");
+          showTooltip(e, `
+            <strong>${d.name}</strong><br/>
+            Population: <strong>${d.pop} Million</strong>
+          `);
+        })
+        .on("mousemove", moveTooltip)
+        .on("mouseleave", function() {
+          d3.select(this).attr("fill-opacity", 0.6).attr("stroke", "#0369a1");
+          hideTooltip();
+        });
+
+      // Label cities with a population >= 1 million
+      svg.append("g")
+        .selectAll("text")
+        .data(cities.filter(d => +d.pop >= 1.0))
+        .join("text")
+        .attr("x", d => projection([+d.lon, +d.lat])[0] + rScale(+d.pop) + 4)
+        .attr("y", d => projection([+d.lon, +d.lat])[1] + 4)
+        .text(d => d.name)
+        .attr("font-size", "11px")
+        .attr("font-weight", "600")
+        .attr("fill", "#0f172a")
+        .attr("paint-order", "stroke")
+        .attr("stroke", "#ffffff")
+        .attr("stroke-width", 3);
+    }).catch(err => console.error("Task 5 error:", err));
+
+
+    /* ==========================================================
+       TASK 6: Combined Spatial Encoding
+       ========================================================== */
+    Promise.all([
+      worldGeoPromise,
+      d3.csv('pakistan_cities.csv', d3.autoType),
+      d3.csv('flights.csv', d3.autoType)
+    ]).then(([geoData, cities, flights]) => {
+      const width = 600, height = 380;
+      const svg = d3.select("#combined-svg");
+
+      const pakFeature = geoData.features.find(f => f.properties.iso_a3 === 'PAK' || f.properties.name === 'Pakistan');
+      const projection = d3.geoMercator()
+        .fitExtent([[40, 25], [width - 40, height - 25]], pakFeature);
+      const path = d3.geoPath().projection(projection);
+
+      // Basemap: Pakistan outline
+      svg.append("path")
+        .datum(pakFeature)
+        .attr("d", path)
+        .attr("fill", "#f1f5f9")
+        .attr("stroke", "#64748b")
+        .attr("stroke-width", 1.5);
+
+      // Calculate route counts for hub status (4+ routes is Hub)
+      const routeCount = new Map();
+      flights.forEach(f => {
+        routeCount.set(f.source, (routeCount.get(f.source) || 0) + 1);
+        routeCount.set(f.target, (routeCount.get(f.target) || 0) + 1);
+      });
+
+      cities.forEach(c => {
+        c.routes = routeCount.get(c.name) || 0;
+        c.isHub = c.routes >= 4;
+      });
+
+      const cityMap = new Map(cities.map(c => [c.name, c]));
+
+      const routes = flights.map(f => {
+        const s = cityMap.get(f.source);
+        const t = cityMap.get(f.target);
+        return {
+          source: f.source,
+          target: f.target,
+          flights: +f.flights,
+          coords1: s ? projection([+s.lon, +s.lat]) : null,
+          coords2: t ? projection([+t.lon, +t.lat]) : null
+        };
+      }).filter(r => r.coords1 && r.coords2);
+
+      // Scales
+      const rScale = d3.scaleSqrt()
+        .domain([0, d3.max(cities, d => +d.pop)])
+        .range([4, 20]);
+
+      const lineWidthScale = d3.scaleLinear()
+        .domain(d3.extent(flights, d => +d.flights))
+        .range([1.5, 5.5]);
+
+      // 1. DRAW FLIGHT ROUTES FIRST (lines under city nodes)
+      const routeLines = svg.append("g")
+        .attr("class", "routes")
+        .selectAll("line")
+        .data(routes)
+        .join("line")
+        .attr("x1", d => d.coords1[0])
+        .attr("y1", d => d.coords1[1])
+        .attr("x2", d => d.coords2[0])
+        .attr("y2", d => d.coords2[1])
+        .attr("stroke", "#64748b")
+        .attr("stroke-opacity", 0.5)
+        .attr("stroke-width", d => lineWidthScale(d.flights));
+
+      // 2. DRAW CITY NODES ON TOP
+      const cityNodes = svg.append("g")
+        .attr("class", "cities")
+        .selectAll("g")
+        .data(cities)
+        .join("g")
+        .attr("transform", d => `translate(${projection([+d.lon, +d.lat])})`)
+        .style("cursor", "pointer");
+
+      cityNodes.append("circle")
+        .attr("r", d => rScale(+d.pop))
+        .attr("fill", d => d.isHub ? "var(--accent-hub)" : "var(--accent-nonhub)")
+        .attr("fill-opacity", 0.85)
+        .attr("stroke", "#ffffff")
+        .attr("stroke-width", 1.8);
+
+      cityNodes.append("text")
+        .attr("x", d => rScale(+d.pop) + 4)
+        .attr("y", 4)
+        .text(d => d.name)
+        .attr("font-size", "10px")
+        .attr("font-weight", d => d.isHub ? "700" : "500")
+        .attr("fill", d => d.isHub ? "#9f1239" : "#334155")
+        .attr("paint-order", "stroke")
+        .attr("stroke", "#ffffff")
+        .attr("stroke-width", 2.5);
+
+      // Hovering a city dims unconnected routes
+      cityNodes.on("mouseenter", function(e, d) {
+        routeLines.transition().duration(150)
+          .attr("stroke", r => (r.source === d.name || r.target === d.name) ? "#f43f5e" : "#cbd5e1")
+          .attr("stroke-opacity", r => (r.source === d.name || r.target === d.name) ? 1 : 0.08)
+          .attr("stroke-width", r => (r.source === d.name || r.target === d.name) ? lineWidthScale(r.flights) + 1 : lineWidthScale(r.flights));
+
+        showTooltip(e, `
+          <div class="d-flex align-items-center gap-2 mb-1">
+            <strong>${d.name}</strong>
+            ${d.isHub ? '<span class="badge bg-danger">Major Hub</span>' : '<span class="badge bg-secondary">Regional</span>'}
+          </div>
+          <div>Population: <strong>${d.pop} Million</strong></div>
+          <div>Flight Routes: <strong>${d.routes} connected</strong></div>
+        `);
+      })
+      .on("mousemove", moveTooltip)
+      .on("mouseleave", function() {
+        routeLines.transition().duration(150)
+          .attr("stroke", "#64748b")
+          .attr("stroke-opacity", 0.5)
+          .attr("stroke-width", d => lineWidthScale(d.flights));
+        hideTooltip();
+      });
+
+      routeLines.on("mouseenter", function(e, d) {
+        showTooltip(e, `
+          <strong>${d.source} &harr; ${d.target}</strong><br/>
+          Weekly Flights: <strong>${d.flights}</strong>
+        `);
+      })
+      .on("mousemove", moveTooltip)
+      .on("mouseleave", hideTooltip);
+    }).catch(err => console.error("Task 6 error:", err));
+  </script>
+</body>
+</html>
